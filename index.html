@@ -223,6 +223,50 @@
         .album-files.collapsed {
             display: none;
         }
+        .artist-group {
+            margin-bottom: 25px;
+            border: 2px solid #d0d7de;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .artist-header {
+            background-color: #f6f8fa;
+            padding: 15px 18px;
+            border-bottom: 2px solid #d0d7de;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+        .artist-header:hover {
+            background-color: #eef2f5;
+        }
+        .artist-title {
+            font-weight: bold;
+            font-size: 16px;
+            color: #1f2328;
+        }
+        .artist-meta {
+            font-size: 13px;
+            color: #656d76;
+        }
+        .artist-albums {
+            padding: 15px;
+            background-color: #ffffff;
+        }
+        .artist-albums.collapsed {
+            display: none;
+        }
+        .nested-album {
+            margin-bottom: 15px;
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .nested-album:last-child {
+            margin-bottom: 0;
+        }
     </style>
 </head>
 <body>
@@ -243,6 +287,7 @@
                         <button class="filter-btn" data-type="video">🎬 動画</button>
                         <button class="filter-btn" data-type="audio">🎵 音声</button>
                         <button class="filter-btn" id="albumGroupBtn" data-group="album">📁 アルバム別</button>
+                        <button class="filter-btn" id="artistGroupBtn" data-group="artist">🎤 アーティスト別</button>
                     </div>
                     <div class="file-count" id="fileCount"></div>
                 </div>
@@ -269,6 +314,7 @@
         let currentFilter = 'all';
         let currentSearch = '';
         let groupByAlbum = false;
+        let groupByArtist = false;
         
         async function selectFolder() {
             const fileList = document.getElementById('fileList');
@@ -413,8 +459,25 @@
                         groupByAlbum = !groupByAlbum;
                         btn.classList.toggle('active');
                         
-                        // Reset other filters when toggling album view
+                        // Reset other grouping and filters
                         if (groupByAlbum) {
+                            groupByArtist = false;
+                            document.getElementById('artistGroupBtn').classList.remove('active');
+                            filterButtons.forEach(b => {
+                                if (b.dataset.type) b.classList.remove('active');
+                            });
+                            document.querySelector('[data-type="all"]').classList.add('active');
+                            currentFilter = 'all';
+                        }
+                    } else if (btn.dataset.group === 'artist') {
+                        // Toggle artist grouping
+                        groupByArtist = !groupByArtist;
+                        btn.classList.toggle('active');
+                        
+                        // Reset other grouping and filters
+                        if (groupByArtist) {
+                            groupByAlbum = false;
+                            document.getElementById('albumGroupBtn').classList.remove('active');
                             filterButtons.forEach(b => {
                                 if (b.dataset.type) b.classList.remove('active');
                             });
@@ -423,9 +486,11 @@
                         }
                     } else {
                         // Regular filter buttons
-                        if (groupByAlbum) {
+                        if (groupByAlbum || groupByArtist) {
                             groupByAlbum = false;
+                            groupByArtist = false;
                             document.getElementById('albumGroupBtn').classList.remove('active');
+                            document.getElementById('artistGroupBtn').classList.remove('active');
                         }
                         filterButtons.forEach(b => {
                             if (b.dataset.type) b.classList.remove('active');
@@ -464,7 +529,9 @@
             fileCount.textContent = `${filteredFiles.length}件 / ${allFiles.length}件`;
             
             // Display files (grouped or normal)
-            if (groupByAlbum) {
+            if (groupByArtist) {
+                displayArtistGroups(filteredFiles);
+            } else if (groupByAlbum) {
                 displayAlbumGroups(filteredFiles);
             } else {
                 displayFiles({
@@ -544,6 +611,139 @@
                 albumGroup.appendChild(albumHeader);
                 albumGroup.appendChild(albumFilesDiv);
                 fileList.appendChild(albumGroup);
+            });
+        }
+        
+        function displayArtistGroups(files) {
+            const fileList = document.getElementById('fileList');
+            fileList.innerHTML = '';
+            
+            // Group files by artist, then by album
+            const artistGroups = {};
+            files.forEach(file => {
+                const artist = file.artist || 'アーティスト名なし';
+                const album = file.album || 'アルバム名なし';
+                
+                if (!artistGroups[artist]) {
+                    artistGroups[artist] = {};
+                }
+                if (!artistGroups[artist][album]) {
+                    artistGroups[artist][album] = [];
+                }
+                artistGroups[artist][album].push(file);
+            });
+            
+            // Create artist groups
+            Object.keys(artistGroups).sort().forEach(artistName => {
+                const artistAlbums = artistGroups[artistName];
+                const artistGroup = document.createElement('div');
+                artistGroup.className = 'artist-group';
+                
+                // Create artist header
+                const artistHeader = document.createElement('div');
+                artistHeader.className = 'artist-header';
+                artistHeader.addEventListener('click', () => {
+                    const artistAlbumsDiv = artistGroup.querySelector('.artist-albums');
+                    const toggle = artistGroup.querySelector('.album-toggle');
+                    artistAlbumsDiv.classList.toggle('collapsed');
+                    toggle.textContent = artistAlbumsDiv.classList.contains('collapsed') ? '▶' : '▼';
+                });
+                
+                const artistInfo = document.createElement('div');
+                const artistTitle = document.createElement('div');
+                artistTitle.className = 'artist-title';
+                artistTitle.textContent = `📀 ${artistName}`;
+                
+                const artistMeta = document.createElement('div');
+                artistMeta.className = 'artist-meta';
+                const albumCount = Object.keys(artistAlbums).length;
+                const totalFiles = Object.values(artistAlbums).flat().length;
+                const audioCount = Object.values(artistAlbums).flat().filter(f => f.type === 'audio').length;
+                const imageCount = Object.values(artistAlbums).flat().filter(f => f.type === 'image').length;
+                const videoCount = Object.values(artistAlbums).flat().filter(f => f.type === 'video').length;
+                
+                let metaText = `${albumCount}アルバム, ${totalFiles}件`;
+                if (audioCount > 0) metaText += ` (🎵${audioCount}`;
+                if (imageCount > 0) metaText += ` 🖼️${imageCount}`;
+                if (videoCount > 0) metaText += ` 🎬${videoCount}`;
+                if (audioCount > 0 || imageCount > 0 || videoCount > 0) metaText += ')';
+                artistMeta.textContent = metaText;
+                
+                artistInfo.appendChild(artistTitle);
+                artistInfo.appendChild(artistMeta);
+                
+                const artistToggle = document.createElement('div');
+                artistToggle.className = 'album-toggle';
+                artistToggle.textContent = '▼';
+                
+                artistHeader.appendChild(artistInfo);
+                artistHeader.appendChild(artistToggle);
+                
+                // Create artist albums container
+                const artistAlbumsDiv = document.createElement('div');
+                artistAlbumsDiv.className = 'artist-albums';
+                
+                // Add albums to artist
+                Object.keys(artistAlbums).sort().forEach(albumName => {
+                    const albumFiles = artistAlbums[albumName];
+                    const nestedAlbum = document.createElement('div');
+                    nestedAlbum.className = 'nested-album';
+                    
+                    // Create album header
+                    const albumHeader = document.createElement('div');
+                    albumHeader.className = 'album-header';
+                    albumHeader.addEventListener('click', () => {
+                        const albumFilesDiv = nestedAlbum.querySelector('.album-files');
+                        const toggle = nestedAlbum.querySelector('.album-toggle');
+                        albumFilesDiv.classList.toggle('collapsed');
+                        toggle.textContent = albumFilesDiv.classList.contains('collapsed') ? '▶' : '▼';
+                    });
+                    
+                    const albumInfo = document.createElement('div');
+                    const albumTitle = document.createElement('div');
+                    albumTitle.className = 'album-title';
+                    albumTitle.textContent = `📁 ${albumName}`;
+                    
+                    const albumMeta = document.createElement('div');
+                    albumMeta.className = 'album-meta';
+                    const albumAudioCount = albumFiles.filter(f => f.type === 'audio').length;
+                    const albumImageCount = albumFiles.filter(f => f.type === 'image').length;
+                    const albumVideoCount = albumFiles.filter(f => f.type === 'video').length;
+                    let albumMetaText = `${albumFiles.length}件`;
+                    if (albumAudioCount > 0) albumMetaText += ` (🎵${albumAudioCount}`;
+                    if (albumImageCount > 0) albumMetaText += ` 🖼️${albumImageCount}`;
+                    if (albumVideoCount > 0) albumMetaText += ` 🎬${albumVideoCount}`;
+                    if (albumAudioCount > 0 || albumImageCount > 0 || albumVideoCount > 0) albumMetaText += ')';
+                    albumMeta.textContent = albumMetaText;
+                    
+                    albumInfo.appendChild(albumTitle);
+                    albumInfo.appendChild(albumMeta);
+                    
+                    const albumToggle = document.createElement('div');
+                    albumToggle.className = 'album-toggle';
+                    albumToggle.textContent = '▼';
+                    
+                    albumHeader.appendChild(albumInfo);
+                    albumHeader.appendChild(albumToggle);
+                    
+                    // Create album files container
+                    const albumFilesDiv = document.createElement('div');
+                    albumFilesDiv.className = 'album-files';
+                    
+                    // Add files to album
+                    albumFiles.forEach(file => {
+                        const fileItem = createFileItem(file);
+                        albumFilesDiv.appendChild(fileItem);
+                    });
+                    
+                    nestedAlbum.appendChild(albumHeader);
+                    nestedAlbum.appendChild(albumFilesDiv);
+                    artistAlbumsDiv.appendChild(nestedAlbum);
+                });
+                
+                artistGroup.appendChild(artistHeader);
+                artistGroup.appendChild(artistAlbumsDiv);
+                fileList.appendChild(artistGroup);
             });
         }
         
