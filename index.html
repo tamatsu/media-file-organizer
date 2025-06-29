@@ -721,14 +721,14 @@
                     
                     const albumToggle = document.createElement('div');
                     albumToggle.className = 'album-toggle';
-                    albumToggle.textContent = '▼';
+                    albumToggle.textContent = '▶';
                     
                     albumHeader.appendChild(albumInfo);
                     albumHeader.appendChild(albumToggle);
                     
-                    // Create album files container
+                    // Create album files container (collapsed by default)
                     const albumFilesDiv = document.createElement('div');
-                    albumFilesDiv.className = 'album-files';
+                    albumFilesDiv.className = 'album-files collapsed';
                     
                     // Add files to album
                     albumFiles.forEach(file => {
