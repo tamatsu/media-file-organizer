@@ -140,10 +140,6 @@ npm run typecheck
 
 MIT License
 
-## 貢献
-
-Issue報告やプルリクエストを歓迎します。
-
 ## 作者
 
 Generated with Claude Code
