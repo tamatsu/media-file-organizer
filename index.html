@@ -173,7 +173,7 @@
         
         async function selectFolder() {
             const fileList = document.getElementById('fileList');
-            fileList.innerHTML = '<div class="loading">フォルダを読み込み中...</div>';
+            fileList.innerHTML = '<div class="loading">フォルダを読み込み中...<br><small>サブフォルダも含めて検索しています</small></div>';
             
             try {
                 const result = await ipcRenderer.invoke('select-folder');
@@ -251,7 +251,10 @@
                 // Create file meta element
                 const fileMeta = document.createElement('div');
                 fileMeta.className = 'file-meta';
-                fileMeta.textContent = `${file.type} • ${sizeStr} • ${dateStr}`;
+                
+                // Add folder path if file is in subdirectory
+                const pathInfo = file.relativePath ? ` (${file.relativePath}/)` : '';
+                fileMeta.textContent = `${file.type} • ${sizeStr} • ${dateStr}${pathInfo}`;
                 
                 // Assemble the structure
                 detailsDiv.appendChild(fileName);

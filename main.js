@@ -87,27 +87,44 @@ ipcMain.handle('get-file-url', async (event, filePath) => {
 async function getMediaFiles(folderPath) {
   const mediaExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.mp4', '.avi', '.mov', '.wmv', '.mp3', '.wav', '.flac', '.m4a'];
   
-  try {
-    const files = await fs.promises.readdir(folderPath);
+  async function scanDirectory(currentPath, relativePath = '') {
     const mediaFiles = [];
     
-    for (const file of files) {
-      const filePath = path.join(folderPath, file);
-      const stat = await fs.promises.stat(filePath);
+    try {
+      const files = await fs.promises.readdir(currentPath);
       
-      if (stat.isFile()) {
-        const ext = path.extname(file).toLowerCase();
-        if (mediaExtensions.includes(ext)) {
-          mediaFiles.push({
-            name: file,
-            path: filePath,
-            size: stat.size,
-            type: getFileType(ext),
-            modified: stat.mtime
-          });
+      for (const file of files) {
+        const filePath = path.join(currentPath, file);
+        const stat = await fs.promises.stat(filePath);
+        
+        if (stat.isDirectory()) {
+          // Recursively scan subdirectories
+          const subPath = relativePath ? path.join(relativePath, file) : file;
+          const subFiles = await scanDirectory(filePath, subPath);
+          mediaFiles.push(...subFiles);
+        } else if (stat.isFile()) {
+          const ext = path.extname(file).toLowerCase();
+          if (mediaExtensions.includes(ext)) {
+            mediaFiles.push({
+              name: file,
+              path: filePath,
+              relativePath: relativePath,
+              size: stat.size,
+              type: getFileType(ext),
+              modified: stat.mtime
+            });
+          }
         }
       }
+    } catch (error) {
+      console.error(`Error reading directory ${currentPath}:`, error);
     }
+    
+    return mediaFiles;
+  }
+  
+  try {
+    const mediaFiles = await scanDirectory(folderPath);
     
     return {
       folder: folderPath,
