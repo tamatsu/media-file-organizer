@@ -4,7 +4,7 @@
   "description": "Electronでローカルのメディアファイルを整理するアプリ",
   "main": "main.js",
   "scripts": {
-    "start": "electron . --platform=win32",
+    "start": "electron . --platform=win32 --disable-gpu --no-sandbox",
     "dev": "electron . --inspect=5858",
     "build": "electron-builder",
     "build:win": "electron-builder --win",

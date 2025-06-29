@@ -43,6 +43,45 @@
             min-height: 300px;
             padding: 10px;
         }
+        .folder-info {
+            background-color: #f0f8ff;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            border-left: 4px solid #007acc;
+        }
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            background-color: #fafafa;
+        }
+        .file-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            text-align: center;
+        }
+        .file-details {
+            flex: 1;
+        }
+        .file-name {
+            font-weight: bold;
+            color: #333;
+        }
+        .file-meta {
+            font-size: 0.8em;
+            color: #666;
+            margin-top: 2px;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
     </style>
 </head>
 <body>
@@ -58,12 +97,81 @@
     </div>
 
     <script>
-        function selectFolder() {
-            alert('フォルダ選択機能は実装予定です');
+        const { ipcRenderer } = require('electron');
+        
+        let currentFolder = null;
+        
+        async function selectFolder() {
+            const fileList = document.getElementById('fileList');
+            fileList.innerHTML = '<div class="loading">フォルダを読み込み中...</div>';
+            
+            try {
+                const result = await ipcRenderer.invoke('select-folder');
+                if (result) {
+                    currentFolder = result;
+                    displayFiles(result);
+                } else {
+                    fileList.innerHTML = '<p>フォルダが選択されませんでした</p>';
+                }
+            } catch (error) {
+                console.error('Error selecting folder:', error);
+                fileList.innerHTML = '<p>エラーが発生しました</p>';
+            }
+        }
+
+        function displayFiles(data) {
+            const fileList = document.getElementById('fileList');
+            
+            if (!data || !data.files || data.files.length === 0) {
+                fileList.innerHTML = '<p>メディアファイルが見つかりませんでした</p>';
+                return;
+            }
+            
+            let html = `<div class="folder-info">
+                <strong>選択されたフォルダ:</strong> ${data.folder}<br>
+                <strong>メディアファイル数:</strong> ${data.files.length}件
+            </div>`;
+            
+            data.files.forEach(file => {
+                const icon = getFileIcon(file.type);
+                const sizeStr = formatFileSize(file.size);
+                const dateStr = new Date(file.modified).toLocaleDateString('ja-JP');
+                
+                html += `<div class="file-item">
+                    <div class="file-icon">${icon}</div>
+                    <div class="file-details">
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-meta">${file.type} • ${sizeStr} • ${dateStr}</div>
+                    </div>
+                </div>`;
+            });
+            
+            fileList.innerHTML = html;
+        }
+        
+        function getFileIcon(type) {
+            switch(type) {
+                case 'image': return '🖼️';
+                case 'video': return '🎬';
+                case 'audio': return '🎵';
+                default: return '📄';
+            }
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
 
         function refreshFiles() {
-            document.getElementById('fileList').innerHTML = '<p>ファイル更新機能は実装予定です</p>';
+            if (currentFolder) {
+                displayFiles(currentFolder);
+            } else {
+                document.getElementById('fileList').innerHTML = '<p>まずフォルダを選択してください</p>';
+            }
         }
     </script>
 </body>
