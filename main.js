@@ -47,6 +47,43 @@ ipcMain.handle('select-folder', async () => {
   return null;
 });
 
+ipcMain.handle('get-file-url', async (event, filePath) => {
+  try {
+    const fileBuffer = await fs.promises.readFile(filePath);
+    const base64Data = fileBuffer.toString('base64');
+    const ext = path.extname(filePath).toLowerCase();
+    
+    let mimeType = 'application/octet-stream';
+    
+    // Image types
+    if (['.jpg', '.jpeg'].includes(ext)) mimeType = 'image/jpeg';
+    else if (ext === '.png') mimeType = 'image/png';
+    else if (ext === '.gif') mimeType = 'image/gif';
+    else if (ext === '.webp') mimeType = 'image/webp';
+    else if (ext === '.bmp') mimeType = 'image/bmp';
+    else if (ext === '.svg') mimeType = 'image/svg+xml';
+    
+    // Video types
+    else if (ext === '.mp4') mimeType = 'video/mp4';
+    else if (ext === '.avi') mimeType = 'video/x-msvideo';
+    else if (ext === '.mov') mimeType = 'video/quicktime';
+    else if (ext === '.wmv') mimeType = 'video/x-ms-wmv';
+    else if (ext === '.webm') mimeType = 'video/webm';
+    
+    // Audio types
+    else if (ext === '.mp3') mimeType = 'audio/mpeg';
+    else if (ext === '.wav') mimeType = 'audio/wav';
+    else if (ext === '.flac') mimeType = 'audio/flac';
+    else if (ext === '.m4a') mimeType = 'audio/mp4';
+    else if (ext === '.ogg') mimeType = 'audio/ogg';
+    
+    return `data:${mimeType};base64,${base64Data}`;
+  } catch (error) {
+    console.error('Error reading file:', error);
+    return null;
+  }
+});
+
 async function getMediaFiles(folderPath) {
   const mediaExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.mp4', '.avi', '.mov', '.wmv', '.mp3', '.wav', '.flac', '.m4a'];
   

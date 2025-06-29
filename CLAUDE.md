@@ -10,6 +10,15 @@ Electronでローカルのメディアファイルを整理するアプリケー
 - `npm run lint` - Run linting
 - `npm run typecheck` - Run type checking
 
+## Git Workflow Rules
+コミット前の確認事項：
+
+**ファイル一覧確認**
+```bash
+git status --porcelain
+```
+コミット対象ファイルを必ず確認してからコミットする
+
 ## Building for Windows (WSL Environment)
 WSL環境でWindows向けのexeをビルドする方法：
 
