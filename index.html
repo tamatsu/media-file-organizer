@@ -33,6 +33,11 @@
             border-radius: 4px;
             padding: 20px;
             background-color: #fafafa;
+            position: sticky;
+            top: 20px;
+            height: fit-content;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
         }
         h1 {
             color: #333;
@@ -139,6 +144,48 @@
             color: #999;
             font-style: italic;
         }
+        .search-filters {
+            margin-bottom: 15px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border: 1px solid #e9ecef;
+        }
+        .search-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        .filter-buttons {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+            background-color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        .filter-btn:hover {
+            background-color: #e6f3ff;
+        }
+        .filter-btn.active {
+            background-color: #007acc;
+            color: white;
+            border-color: #007acc;
+        }
+        .file-count {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
@@ -151,6 +198,16 @@
         <div class="main-content">
             <div class="file-list-container">
                 <h3>ファイル一覧</h3>
+                <div class="search-filters" id="searchFilters" style="display: none;">
+                    <input type="text" class="search-input" id="searchInput" placeholder="ファイル名で検索...">
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" data-type="all">全て</button>
+                        <button class="filter-btn" data-type="image">🖼️ 画像</button>
+                        <button class="filter-btn" data-type="video">🎬 動画</button>
+                        <button class="filter-btn" data-type="audio">🎵 音声</button>
+                    </div>
+                    <div class="file-count" id="fileCount"></div>
+                </div>
                 <div class="file-list" id="fileList">
                     <p>フォルダを選択してメディアファイルを表示します</p>
                 </div>
@@ -170,6 +227,9 @@
         const { ipcRenderer } = require('electron');
         
         let currentFolder = null;
+        let allFiles = [];
+        let currentFilter = 'all';
+        let currentSearch = '';
         
         async function selectFolder() {
             const fileList = document.getElementById('fileList');
@@ -179,7 +239,9 @@
                 const result = await ipcRenderer.invoke('select-folder');
                 if (result) {
                     currentFolder = result;
-                    displayFiles(result);
+                    allFiles = result.files;
+                    setupFilters();
+                    displayFilteredFiles();
                 } else {
                     fileList.innerHTML = '<p>フォルダが選択されませんでした</p>';
                 }
@@ -284,10 +346,67 @@
 
         function refreshFiles() {
             if (currentFolder) {
-                displayFiles(currentFolder);
+                displayFilteredFiles();
             } else {
                 document.getElementById('fileList').innerHTML = '<p>まずフォルダを選択してください</p>';
             }
+        }
+        
+        function setupFilters() {
+            const searchFilters = document.getElementById('searchFilters');
+            const searchInput = document.getElementById('searchInput');
+            const filterButtons = document.querySelectorAll('.filter-btn');
+            
+            // Show filters
+            searchFilters.style.display = 'block';
+            
+            // Setup search input
+            searchInput.addEventListener('input', (e) => {
+                currentSearch = e.target.value.toLowerCase();
+                displayFilteredFiles();
+            });
+            
+            // Setup filter buttons
+            filterButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    filterButtons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentFilter = btn.dataset.type;
+                    displayFilteredFiles();
+                });
+            });
+        }
+        
+        function displayFilteredFiles() {
+            if (!allFiles || allFiles.length === 0) {
+                displayFiles({ folder: currentFolder?.folder || '', files: [] });
+                return;
+            }
+            
+            // Apply filters
+            let filteredFiles = allFiles.filter(file => {
+                // Type filter
+                if (currentFilter !== 'all' && file.type !== currentFilter) {
+                    return false;
+                }
+                
+                // Search filter
+                if (currentSearch && !file.name.toLowerCase().includes(currentSearch)) {
+                    return false;
+                }
+                
+                return true;
+            });
+            
+            // Update file count
+            const fileCount = document.getElementById('fileCount');
+            fileCount.textContent = `${filteredFiles.length}件 / ${allFiles.length}件`;
+            
+            // Display filtered files
+            displayFiles({
+                folder: currentFolder.folder,
+                files: filteredFiles
+            });
         }
         
         async function previewFile(filePath, fileType, fileName, fileSize) {
