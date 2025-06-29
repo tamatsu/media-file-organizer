@@ -318,7 +318,15 @@
         
         async function selectFolder() {
             const fileList = document.getElementById('fileList');
-            fileList.innerHTML = '<div class="loading">フォルダを読み込み中...<br><small>サブフォルダも含めて検索しています</small></div>';
+            fileList.innerHTML = '';
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'loading';
+            loadingDiv.appendChild(document.createTextNode('フォルダを読み込み中...'));
+            loadingDiv.appendChild(document.createElement('br'));
+            const smallText = document.createElement('small');
+            smallText.textContent = 'サブフォルダも含めて検索しています';
+            loadingDiv.appendChild(smallText);
+            fileList.appendChild(loadingDiv);
             
             try {
                 const result = await ipcRenderer.invoke('select-folder');
@@ -328,11 +336,17 @@
                     setupFilters();
                     displayFilteredFiles();
                 } else {
-                    fileList.innerHTML = '<p>フォルダが選択されませんでした</p>';
+                    fileList.innerHTML = '';
+                    const message = document.createElement('p');
+                    message.textContent = 'フォルダが選択されませんでした';
+                    fileList.appendChild(message);
                 }
             } catch (error) {
                 console.error('Error selecting folder:', error);
-                fileList.innerHTML = '<p>エラーが発生しました</p>';
+                fileList.innerHTML = '';
+                const message = document.createElement('p');
+                message.textContent = 'エラーが発生しました';
+                fileList.appendChild(message);
             }
         }
 
@@ -354,12 +368,16 @@
             folderInfo.className = 'folder-info';
             
             const folderPath = document.createElement('div');
-            folderPath.innerHTML = '<strong>選択されたフォルダ:</strong> ';
-            folderPath.appendChild(document.createTextNode(data.folder));
+            const folderLabel = document.createElement('strong');
+            folderLabel.textContent = '選択されたフォルダ:';
+            folderPath.appendChild(folderLabel);
+            folderPath.appendChild(document.createTextNode(' ' + data.folder));
             
             const fileCount = document.createElement('div');
-            fileCount.innerHTML = '<strong>メディアファイル数:</strong> ';
-            fileCount.appendChild(document.createTextNode(`${data.files.length}件`));
+            const countLabel = document.createElement('strong');
+            countLabel.textContent = 'メディアファイル数:';
+            fileCount.appendChild(countLabel);
+            fileCount.appendChild(document.createTextNode(` ${data.files.length}件`));
             
             folderInfo.appendChild(folderPath);
             folderInfo.appendChild(fileCount);
@@ -433,7 +451,11 @@
             if (currentFolder) {
                 displayFilteredFiles();
             } else {
-                document.getElementById('fileList').innerHTML = '<p>まずフォルダを選択してください</p>';
+                const fileList = document.getElementById('fileList');
+                fileList.innerHTML = '';
+                const message = document.createElement('p');
+                message.textContent = 'まずフォルダを選択してください';
+                fileList.appendChild(message);
             }
         }
         
@@ -812,11 +834,13 @@
             const sizeStr = formatFileSize(fileSize);
             
             // Show loading state
-            previewContent.innerHTML = `
-                <div class="loading">
-                    <p>ファイルを読み込み中...</p>
-                </div>
-            `;
+            previewContent.innerHTML = '';
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'loading';
+            const loadingText = document.createElement('p');
+            loadingText.textContent = 'ファイルを読み込み中...';
+            loadingDiv.appendChild(loadingText);
+            previewContent.appendChild(loadingDiv);
             
             try {
                 const dataUrl = await ipcRenderer.invoke('get-file-url', filePath);
@@ -825,54 +849,131 @@
                     throw new Error('ファイルの読み込みに失敗しました');
                 }
                 
-                let mediaElement = '';
                 
+                // Create preview content container
+                previewContent.innerHTML = '';
+                const previewDiv = document.createElement('div');
+                previewDiv.className = 'preview-content';
+                
+                // Create media element
+                let mediaEl;
                 switch(fileType) {
                     case 'image':
-                        mediaElement = `<img src="${dataUrl}" class="preview-image" alt="${fileName}" onload="this.style.opacity=1" style="opacity:0;transition:opacity 0.3s">`;
+                        mediaEl = document.createElement('img');
+                        mediaEl.src = dataUrl;
+                        mediaEl.className = 'preview-image';
+                        mediaEl.alt = fileName;
+                        mediaEl.style.opacity = '0';
+                        mediaEl.style.transition = 'opacity 0.3s';
+                        mediaEl.onload = () => mediaEl.style.opacity = '1';
                         break;
                     case 'video':
-                        mediaElement = `<video class="preview-video" controls preload="metadata">
-                            <source src="${dataUrl}" />
-                            <p>このブラウザは動画の再生をサポートしていません。</p>
-                        </video>`;
+                        mediaEl = document.createElement('video');
+                        mediaEl.className = 'preview-video';
+                        mediaEl.controls = true;
+                        mediaEl.preload = 'metadata';
+                        const videoSource = document.createElement('source');
+                        videoSource.src = dataUrl;
+                        mediaEl.appendChild(videoSource);
+                        const videoFallback = document.createElement('p');
+                        videoFallback.textContent = 'このブラウザは動画の再生をサポートしていません。';
+                        mediaEl.appendChild(videoFallback);
                         break;
                     case 'audio':
-                        mediaElement = `<div style="text-align:center;margin:40px 0;">
-                            <div style="font-size:48px;margin-bottom:20px;">🎵</div>
-                            <audio class="preview-audio" controls preload="metadata">
-                                <source src="${dataUrl}" />
-                                <p>このブラウザは音声の再生をサポートしていません。</p>
-                            </audio>
-                        </div>`;
+                        const audioContainer = document.createElement('div');
+                        audioContainer.style.textAlign = 'center';
+                        audioContainer.style.margin = '40px 0';
+                        const audioIcon = document.createElement('div');
+                        audioIcon.style.fontSize = '48px';
+                        audioIcon.style.marginBottom = '20px';
+                        audioIcon.textContent = '🎵';
+                        const audioEl = document.createElement('audio');
+                        audioEl.className = 'preview-audio';
+                        audioEl.controls = true;
+                        audioEl.preload = 'metadata';
+                        const audioSource = document.createElement('source');
+                        audioSource.src = dataUrl;
+                        audioEl.appendChild(audioSource);
+                        const audioFallback = document.createElement('p');
+                        audioFallback.textContent = 'このブラウザは音声の再生をサポートしていません。';
+                        audioEl.appendChild(audioFallback);
+                        audioContainer.appendChild(audioIcon);
+                        audioContainer.appendChild(audioEl);
+                        mediaEl = audioContainer;
                         break;
                     default:
-                        mediaElement = `<div class="preview-placeholder">
-                            <div style="font-size:48px;margin-bottom:20px;">📄</div>
-                            <p>このファイル形式はプレビューできません</p>
-                        </div>`;
+                        const placeholder = document.createElement('div');
+                        placeholder.className = 'preview-placeholder';
+                        const placeholderIcon = document.createElement('div');
+                        placeholderIcon.style.fontSize = '48px';
+                        placeholderIcon.style.marginBottom = '20px';
+                        placeholderIcon.textContent = '📄';
+                        const placeholderText = document.createElement('p');
+                        placeholderText.textContent = 'このファイル形式はプレビューできません';
+                        placeholder.appendChild(placeholderIcon);
+                        placeholder.appendChild(placeholderText);
+                        mediaEl = placeholder;
                 }
                 
-                previewContent.innerHTML = `
-                    <div class="preview-content">
-                        ${mediaElement}
-                        <div class="preview-info">
-                            <strong>ファイル名:</strong> ${fileName}<br>
-                            <strong>ファイルサイズ:</strong> ${sizeStr}<br>
-                            <strong>ファイル形式:</strong> ${fileType}<br>
-                            <strong>パス:</strong> ${filePath}
-                        </div>
-                    </div>
-                `;
+                // Create info section
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'preview-info';
+                
+                const fileNameInfo = document.createElement('div');
+                const fileNameLabel = document.createElement('strong');
+                fileNameLabel.textContent = 'ファイル名:';
+                fileNameInfo.appendChild(fileNameLabel);
+                fileNameInfo.appendChild(document.createTextNode(' ' + fileName));
+                
+                const fileSizeInfo = document.createElement('div');
+                const fileSizeLabel = document.createElement('strong');
+                fileSizeLabel.textContent = 'ファイルサイズ:';
+                fileSizeInfo.appendChild(fileSizeLabel);
+                fileSizeInfo.appendChild(document.createTextNode(' ' + sizeStr));
+                
+                const fileTypeInfo = document.createElement('div');
+                const fileTypeLabel = document.createElement('strong');
+                fileTypeLabel.textContent = 'ファイル形式:';
+                fileTypeInfo.appendChild(fileTypeLabel);
+                fileTypeInfo.appendChild(document.createTextNode(' ' + fileType));
+                
+                const filePathInfo = document.createElement('div');
+                const filePathLabel = document.createElement('strong');
+                filePathLabel.textContent = 'パス:';
+                filePathInfo.appendChild(filePathLabel);
+                filePathInfo.appendChild(document.createTextNode(' ' + filePath));
+                
+                infoDiv.appendChild(fileNameInfo);
+                infoDiv.appendChild(fileSizeInfo);
+                infoDiv.appendChild(fileTypeInfo);
+                infoDiv.appendChild(filePathInfo);
+                
+                previewDiv.appendChild(mediaEl);
+                previewDiv.appendChild(infoDiv);
+                previewContent.appendChild(previewDiv);
             } catch (error) {
                 console.error('Error previewing file:', error);
-                previewContent.innerHTML = `
-                    <div class="preview-placeholder">
-                        <div style="font-size:48px;margin-bottom:20px;">❌</div>
-                        <p>ファイルの読み込みに失敗しました</p>
-                        <p style="font-size:0.8em;color:#666;">${error.message}</p>
-                    </div>
-                `;
+                previewContent.innerHTML = '';
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'preview-placeholder';
+                
+                const errorIcon = document.createElement('div');
+                errorIcon.style.fontSize = '48px';
+                errorIcon.style.marginBottom = '20px';
+                errorIcon.textContent = '❌';
+                
+                const errorText = document.createElement('p');
+                errorText.textContent = 'ファイルの読み込みに失敗しました';
+                
+                const errorDetails = document.createElement('p');
+                errorDetails.style.fontSize = '0.8em';
+                errorDetails.style.color = '#666';
+                errorDetails.textContent = error.message;
+                
+                errorDiv.appendChild(errorIcon);
+                errorDiv.appendChild(errorText);
+                errorDiv.appendChild(errorDetails);
+                previewContent.appendChild(errorDiv);
             }
         }
     </script>
