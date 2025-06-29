@@ -4,6 +4,10 @@
 
 Electronでローカルのメディアファイルを整理するアプリケーション
 
+## スクリーンショット
+
+![Application Screenshot](https://tamatsu.github.io/media-file-organizer/screenshot.png)
+
 ## 機能
 
 - **フォルダ選択とファイル検索**: ローカルフォルダを選択し、再帰的にメディアファイルを検索
