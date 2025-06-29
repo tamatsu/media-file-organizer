@@ -55,5 +55,8 @@
       "target": "AppImage",
       "icon": "build/icon.png"
     }
+  },
+  "dependencies": {
+    "music-metadata": "^10.5.0"
   }
 }

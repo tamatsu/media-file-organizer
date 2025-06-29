@@ -186,6 +186,43 @@
             color: #666;
             margin-top: 5px;
         }
+        .album-group {
+            margin-bottom: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .album-header {
+            background-color: #f8f9fa;
+            padding: 12px 15px;
+            border-bottom: 1px solid #e0e0e0;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+        .album-header:hover {
+            background-color: #e9ecef;
+        }
+        .album-title {
+            font-weight: bold;
+            color: #333;
+        }
+        .album-meta {
+            font-size: 12px;
+            color: #666;
+        }
+        .album-toggle {
+            font-size: 14px;
+            color: #666;
+        }
+        .album-files {
+            padding: 10px;
+        }
+        .album-files.collapsed {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -205,6 +242,7 @@
                         <button class="filter-btn" data-type="image">🖼️ 画像</button>
                         <button class="filter-btn" data-type="video">🎬 動画</button>
                         <button class="filter-btn" data-type="audio">🎵 音声</button>
+                        <button class="filter-btn" id="albumGroupBtn" data-group="album">📁 アルバム別</button>
                     </div>
                     <div class="file-count" id="fileCount"></div>
                 </div>
@@ -230,6 +268,7 @@
         let allFiles = [];
         let currentFilter = 'all';
         let currentSearch = '';
+        let groupByAlbum = false;
         
         async function selectFolder() {
             const fileList = document.getElementById('fileList');
@@ -369,9 +408,31 @@
             // Setup filter buttons
             filterButtons.forEach(btn => {
                 btn.addEventListener('click', () => {
-                    filterButtons.forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    currentFilter = btn.dataset.type;
+                    if (btn.dataset.group === 'album') {
+                        // Toggle album grouping
+                        groupByAlbum = !groupByAlbum;
+                        btn.classList.toggle('active');
+                        
+                        // Reset other filters when toggling album view
+                        if (groupByAlbum) {
+                            filterButtons.forEach(b => {
+                                if (b.dataset.type) b.classList.remove('active');
+                            });
+                            document.querySelector('[data-type="all"]').classList.add('active');
+                            currentFilter = 'all';
+                        }
+                    } else {
+                        // Regular filter buttons
+                        if (groupByAlbum) {
+                            groupByAlbum = false;
+                            document.getElementById('albumGroupBtn').classList.remove('active');
+                        }
+                        filterButtons.forEach(b => {
+                            if (b.dataset.type) b.classList.remove('active');
+                        });
+                        btn.classList.add('active');
+                        currentFilter = btn.dataset.type;
+                    }
                     displayFilteredFiles();
                 });
             });
@@ -402,11 +463,140 @@
             const fileCount = document.getElementById('fileCount');
             fileCount.textContent = `${filteredFiles.length}件 / ${allFiles.length}件`;
             
-            // Display filtered files
-            displayFiles({
-                folder: currentFolder.folder,
-                files: filteredFiles
+            // Display files (grouped or normal)
+            if (groupByAlbum) {
+                displayAlbumGroups(filteredFiles);
+            } else {
+                displayFiles({
+                    folder: currentFolder.folder,
+                    files: filteredFiles
+                });
+            }
+        }
+        
+        function displayAlbumGroups(files) {
+            const fileList = document.getElementById('fileList');
+            fileList.innerHTML = '';
+            
+            // Group files by album
+            const albumGroups = {};
+            files.forEach(file => {
+                const album = file.album || 'アルバム名なし';
+                if (!albumGroups[album]) {
+                    albumGroups[album] = [];
+                }
+                albumGroups[album].push(file);
             });
+            
+            // Create album groups
+            Object.keys(albumGroups).sort().forEach(albumName => {
+                const albumFiles = albumGroups[albumName];
+                const albumGroup = document.createElement('div');
+                albumGroup.className = 'album-group';
+                
+                // Create album header
+                const albumHeader = document.createElement('div');
+                albumHeader.className = 'album-header';
+                albumHeader.addEventListener('click', () => {
+                    const albumFilesDiv = albumGroup.querySelector('.album-files');
+                    const toggle = albumGroup.querySelector('.album-toggle');
+                    albumFilesDiv.classList.toggle('collapsed');
+                    toggle.textContent = albumFilesDiv.classList.contains('collapsed') ? '▶' : '▼';
+                });
+                
+                const albumInfo = document.createElement('div');
+                const albumTitle = document.createElement('div');
+                albumTitle.className = 'album-title';
+                albumTitle.textContent = albumName;
+                
+                const albumMeta = document.createElement('div');
+                albumMeta.className = 'album-meta';
+                const audioCount = albumFiles.filter(f => f.type === 'audio').length;
+                const imageCount = albumFiles.filter(f => f.type === 'image').length;
+                const videoCount = albumFiles.filter(f => f.type === 'video').length;
+                let metaText = `${albumFiles.length}件`;
+                if (audioCount > 0) metaText += ` (🎵${audioCount}`;
+                if (imageCount > 0) metaText += ` 🖼️${imageCount}`;
+                if (videoCount > 0) metaText += ` 🎬${videoCount}`;
+                if (audioCount > 0 || imageCount > 0 || videoCount > 0) metaText += ')';
+                albumMeta.textContent = metaText;
+                
+                albumInfo.appendChild(albumTitle);
+                albumInfo.appendChild(albumMeta);
+                
+                const albumToggle = document.createElement('div');
+                albumToggle.className = 'album-toggle';
+                albumToggle.textContent = '▼';
+                
+                albumHeader.appendChild(albumInfo);
+                albumHeader.appendChild(albumToggle);
+                
+                // Create album files container
+                const albumFilesDiv = document.createElement('div');
+                albumFilesDiv.className = 'album-files';
+                
+                // Add files to album
+                albumFiles.forEach(file => {
+                    const fileItem = createFileItem(file);
+                    albumFilesDiv.appendChild(fileItem);
+                });
+                
+                albumGroup.appendChild(albumHeader);
+                albumGroup.appendChild(albumFilesDiv);
+                fileList.appendChild(albumGroup);
+            });
+        }
+        
+        function createFileItem(file) {
+            const icon = getFileIcon(file.type);
+            const sizeStr = formatFileSize(file.size);
+            const dateStr = new Date(file.modified).toLocaleDateString('ja-JP');
+            
+            // Create file item container
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            fileItem.dataset.path = file.path;
+            
+            // Add click event listener
+            fileItem.addEventListener('click', () => {
+                previewFile(file.path, file.type, file.name, file.size);
+            });
+            
+            // Create icon element
+            const iconDiv = document.createElement('div');
+            iconDiv.className = 'file-icon';
+            iconDiv.textContent = icon;
+            
+            // Create details container
+            const detailsDiv = document.createElement('div');
+            detailsDiv.className = 'file-details';
+            
+            // Create file name element (show title if available)
+            const fileName = document.createElement('div');
+            fileName.className = 'file-name';
+            fileName.textContent = file.title || file.name;
+            
+            // Create file meta element
+            const fileMeta = document.createElement('div');
+            fileMeta.className = 'file-meta';
+            
+            // Add artist info for audio files
+            let metaText = `${file.type} • ${sizeStr} • ${dateStr}`;
+            if (file.artist && file.type === 'audio') {
+                metaText = `${file.artist} • ${metaText}`;
+            }
+            if (file.relativePath) {
+                metaText += ` (${file.relativePath}/)`;
+            }
+            fileMeta.textContent = metaText;
+            
+            // Assemble the structure
+            detailsDiv.appendChild(fileName);
+            detailsDiv.appendChild(fileMeta);
+            fileItem.appendChild(iconDiv);
+            fileItem.appendChild(detailsDiv);
+            
+            return fileItem;
         }
         
         async function previewFile(filePath, fileType, fileName, fileSize) {
