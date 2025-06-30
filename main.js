@@ -1,7 +1,6 @@
 const { app, BrowserWindow, dialog, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const mm = require('music-metadata');
 
 function createWindow() {
   const mainWindow = new BrowserWindow({
@@ -106,8 +105,8 @@ async function getMediaFiles(folderPath) {
         } else if (stat.isFile()) {
           const ext = path.extname(file).toLowerCase();
           if (mediaExtensions.includes(ext)) {
-            // Extract metadata for supported file types
-            let metadata = await extractMetadata(filePath, ext);
+            // Extract artist/album from directory hierarchy
+            let hierarchy = parseDirectoryHierarchy(relativePath);
             
             mediaFiles.push({
               name: file,
@@ -116,9 +115,9 @@ async function getMediaFiles(folderPath) {
               size: stat.size,
               type: getFileType(ext),
               modified: stat.mtime,
-              album: metadata.album,
-              artist: metadata.artist,
-              title: metadata.title
+              album: hierarchy.album,
+              artist: hierarchy.artist,
+              title: null
             });
           }
         }
@@ -143,34 +142,17 @@ async function getMediaFiles(folderPath) {
   }
 }
 
-async function extractMetadata(filePath, ext) {
-  const audioExts = ['.mp3', '.wav', '.flac', '.m4a', '.ogg'];
-  
-  // Only extract metadata for audio files
-  if (!audioExts.includes(ext)) {
-    return {
-      album: null,
-      artist: null,
-      title: null
-    };
+function parseDirectoryHierarchy(relativePath) {
+  if (!relativePath) {
+    return { artist: null, album: null };
   }
   
-  try {
-    const { parseFile } = await mm.loadMusicMetadata();
-    const metadata = await parseFile(filePath);
-    return {
-      album: metadata.common.album || null,
-      artist: metadata.common.artist || null,
-      title: metadata.common.title || null
-    };
-  } catch (error) {
-    console.error(`Error extracting metadata from ${filePath}:`, error);
-    return {
-      album: null,
-      artist: null,
-      title: null
-    };
-  }
+  const pathParts = relativePath.split(path.sep);
+  
+  return {
+    artist: pathParts.length >= 1 ? pathParts[0] : null,
+    album: pathParts.length >= 2 ? pathParts[1] : null
+  };
 }
 
 function getFileType(ext) {
