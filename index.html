@@ -280,7 +280,7 @@
             <div class="file-list-container">
                 <h3>ファイル一覧</h3>
                 <div class="search-filters" id="searchFilters" style="display: none;">
-                    <input type="text" class="search-input" id="searchInput" placeholder="ファイル名で検索...">
+                    <input type="text" class="search-input" id="searchInput" placeholder="ファイル名・アーティスト・アルバムで検索...">
                     <div class="filter-buttons">
                         <button class="filter-btn active" data-type="all">全て</button>
                         <button class="filter-btn" data-type="image">🖼️ 画像</button>
@@ -538,9 +538,16 @@
                     return false;
                 }
                 
-                // Search filter
-                if (currentSearch && !file.name.toLowerCase().includes(currentSearch)) {
-                    return false;
+                // Search filter - search in filename, artist, and album
+                if (currentSearch) {
+                    const searchTerm = currentSearch.toLowerCase();
+                    const matchesName = file.name.toLowerCase().includes(searchTerm);
+                    const matchesArtist = file.artist && file.artist.toLowerCase().includes(searchTerm);
+                    const matchesAlbum = file.album && file.album.toLowerCase().includes(searchTerm);
+                    
+                    if (!matchesName && !matchesArtist && !matchesAlbum) {
+                        return false;
+                    }
                 }
                 
                 return true;
