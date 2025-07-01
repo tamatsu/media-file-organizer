@@ -652,14 +652,25 @@
                             }
                         });
                         
-                        // Save rating (placeholder for now)
-                        console.log(`Rating ${albumKey}: ${rating} stars`);
+                        // Save rating
+                        saveRating(albumKey, rating);
                     });
                     
                     albumRating.appendChild(star);
                 }
                 
                 albumInfo.appendChild(albumRating);
+                
+                // Load and display saved rating
+                const savedRating = loadRating(`${artistName}/${albumName}`);
+                if (savedRating > 0) {
+                    const stars = albumRating.querySelectorAll('.star');
+                    stars.forEach((s, index) => {
+                        if (index < savedRating) {
+                            s.classList.add('active');
+                        }
+                    });
+                }
                 
                 const albumToggle = document.createElement('div');
                 albumToggle.className = 'album-toggle';
@@ -788,6 +799,53 @@
                     
                     albumInfo.appendChild(albumTitle);
                     albumInfo.appendChild(albumMeta);
+                    
+                    // Add star rating UI
+                    const albumRating = document.createElement('div');
+                    albumRating.className = 'album-rating';
+                    
+                    for (let i = 1; i <= 5; i++) {
+                        const star = document.createElement('span');
+                        star.className = 'star';
+                        star.textContent = '★';
+                        star.dataset.rating = i;
+                        star.dataset.albumKey = `${artistName}/${albumName}`;
+                        
+                        // Add click handler for star rating
+                        star.addEventListener('click', async (e) => {
+                            e.stopPropagation();
+                            const rating = parseInt(e.target.dataset.rating);
+                            const albumKey = e.target.dataset.albumKey;
+                            
+                            // Update visual state
+                            const stars = albumRating.querySelectorAll('.star');
+                            stars.forEach((s, index) => {
+                                if (index < rating) {
+                                    s.classList.add('active');
+                                } else {
+                                    s.classList.remove('active');
+                                }
+                            });
+                            
+                            // Save rating
+                            saveRating(albumKey, rating);
+                        });
+                        
+                        albumRating.appendChild(star);
+                    }
+                    
+                    albumInfo.appendChild(albumRating);
+                    
+                    // Load and display saved rating
+                    const savedRating = loadRating(`${artistName}/${albumName}`);
+                    if (savedRating > 0) {
+                        const stars = albumRating.querySelectorAll('.star');
+                        stars.forEach((s, index) => {
+                            if (index < savedRating) {
+                                s.classList.add('active');
+                            }
+                        });
+                    }
                     
                     const albumToggle = document.createElement('div');
                     albumToggle.className = 'album-toggle';
@@ -1052,6 +1110,38 @@
             console.error('Stack:', event.reason?.stack);
             console.error('===================================');
         });
+
+        // Rating management functions
+        function saveRating(albumKey, rating) {
+            try {
+                const ratings = loadAllRatings();
+                ratings[albumKey] = rating;
+                localStorage.setItem('albumRatings', JSON.stringify(ratings));
+                console.log(`Saved rating for ${albumKey}: ${rating} stars`);
+            } catch (error) {
+                console.error('Error saving rating:', error);
+            }
+        }
+
+        function loadRating(albumKey) {
+            try {
+                const ratings = loadAllRatings();
+                return ratings[albumKey] || 0;
+            } catch (error) {
+                console.error('Error loading rating:', error);
+                return 0;
+            }
+        }
+
+        function loadAllRatings() {
+            try {
+                const ratingsJson = localStorage.getItem('albumRatings');
+                return ratingsJson ? JSON.parse(ratingsJson) : {};
+            } catch (error) {
+                console.error('Error loading all ratings:', error);
+                return {};
+            }
+        }
     </script>
 </body>
 </html>
