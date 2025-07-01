@@ -2,6 +2,23 @@ const { app, BrowserWindow, dialog, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
+// Global error handlers for main process
+process.on('uncaughtException', (error) => {
+  console.error('=== UNCAUGHT EXCEPTION (MAIN) ===');
+  console.error('Error message:', error.message);
+  console.error('Error stack:', error.stack);
+  console.error('Error type:', error.constructor.name);
+  console.error('================================');
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('=== UNHANDLED REJECTION (MAIN) ===');
+  console.error('Reason:', reason);
+  console.error('Promise:', promise);
+  console.error('Stack:', reason?.stack);
+  console.error('=================================');
+});
+
 function createWindow() {
   const mainWindow = new BrowserWindow({
     width: 1200,
@@ -56,7 +73,12 @@ ipcMain.handle('get-file-url', async (event, filePath) => {
     // Return file:// URL directly - no size limitations
     return `file://${filePath.replace(/\\/g, '/')}`;
   } catch (error) {
-    console.error('Error accessing file:', error);
+    console.error('=== FILE ACCESS ERROR ===');
+    console.error('Error message:', error.message);
+    console.error('Error code:', error.code);
+    console.error('File path:', filePath);
+    console.error('Error type:', error.constructor.name);
+    console.error('========================');
     return null;
   }
 });
@@ -114,7 +136,12 @@ async function getMediaFiles(folderPath) {
       files: mediaFiles
     };
   } catch (error) {
-    console.error('Error reading folder:', error);
+    console.error('=== FOLDER READING ERROR ===');
+    console.error('Error message:', error.message);
+    console.error('Error code:', error.code);
+    console.error('Folder path:', folderPath);
+    console.error('Error type:', error.constructor.name);
+    console.error('============================');
     return null;
   }
 }

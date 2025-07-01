@@ -357,10 +357,21 @@
                     fileList.appendChild(message);
                 }
             } catch (error) {
-                console.error('Error selecting folder:', error);
+                console.error('=== FOLDER SELECTION ERROR ===');
+                console.error('Error message:', error.message);
+                console.error('Error stack:', error.stack);
+                console.error('Error type:', error.constructor.name);
+                console.error('Application state:', {
+                    groupByArtist: groupByArtist,
+                    currentFilter: currentFilter,
+                    allFilesCount: allFiles?.length || 0,
+                    currentFolderPath: currentFolder?.folder || 'none'
+                });
+                console.error('================================');
+                
                 fileList.innerHTML = '';
                 const message = document.createElement('p');
-                message.textContent = 'エラーが発生しました';
+                message.textContent = `エラーが発生しました: ${error.message || 'Unknown error'}`;
                 fileList.appendChild(message);
             }
         }
@@ -989,7 +1000,16 @@
                 previewDiv.appendChild(infoDiv);
                 previewContent.appendChild(previewDiv);
             } catch (error) {
-                console.error('Error previewing file:', error);
+                console.error('=== FILE PREVIEW ERROR ===');
+                console.error('Error message:', error.message);
+                console.error('Error stack:', error.stack);
+                console.error('File details:', {
+                    fileName: fileName,
+                    filePath: filePath,
+                    fileType: fileType,
+                    fileSize: fileSize
+                });
+                console.error('==========================');
                 previewContent.innerHTML = '';
                 const errorDiv = document.createElement('div');
                 errorDiv.className = 'preview-placeholder';
@@ -1013,6 +1033,25 @@
                 previewContent.appendChild(errorDiv);
             }
         }
+
+        // Global error handlers for better debugging
+        window.addEventListener('error', (event) => {
+            console.error('=== GLOBAL JAVASCRIPT ERROR ===');
+            console.error('Error message:', event.message);
+            console.error('Source file:', event.filename);
+            console.error('Line number:', event.lineno);
+            console.error('Column number:', event.colno);
+            console.error('Error object:', event.error);
+            console.error('==============================');
+        });
+
+        window.addEventListener('unhandledrejection', (event) => {
+            console.error('=== UNHANDLED PROMISE REJECTION ===');
+            console.error('Reason:', event.reason);
+            console.error('Promise:', event.promise);
+            console.error('Stack:', event.reason?.stack);
+            console.error('===================================');
+        });
     </script>
 </body>
 </html>
