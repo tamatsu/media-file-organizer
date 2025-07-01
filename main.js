@@ -171,7 +171,7 @@ async function getMediaFiles(folderPath) {
 }
 
 function parseDirectoryHierarchy(relativePath) {
-  if (!relativePath) {
+  if (!relativePath || typeof relativePath !== 'string') {
     return { artist: null, album: null };
   }
 
@@ -185,6 +185,10 @@ function parseDirectoryHierarchy(relativePath) {
 }
 
 function getFileType(ext) {
+  if (!ext || typeof ext !== 'string') {
+    return 'unknown';
+  }
+
   const imageExts = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'];
   const videoExts = ['.mp4', '.avi', '.mov', '.wmv'];
   const audioExts = ['.mp3', '.wav', '.flac', '.m4a'];

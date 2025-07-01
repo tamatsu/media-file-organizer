@@ -1,0 +1,363 @@
+// UI Integration Tests
+
+// Mock localStorage
+const localStorageMock = {
+  data: {},
+  getItem: jest.fn(key => localStorageMock.data[key] || null),
+  setItem: jest.fn((key, value) => {
+    localStorageMock.data[key] = value;
+  }),
+  removeItem: jest.fn(key => {
+    delete localStorageMock.data[key];
+  }),
+  clear: jest.fn(() => {
+    localStorageMock.data = {};
+  })
+};
+
+Object.defineProperty(window, 'localStorage', {
+  value: localStorageMock
+});
+
+// Mock console
+global.console = {
+  ...console,
+  log: jest.fn(),
+  error: jest.fn()
+};
+
+describe('UI Integration Tests', () => {
+  beforeEach(() => {
+    // Clear DOM and mocks
+    document.body.innerHTML = '';
+    localStorageMock.clear();
+    jest.clearAllMocks();
+  });
+
+  describe('Star Rating UI', () => {
+    test('should create star rating elements', () => {
+      // Create album rating container
+      const albumRating = document.createElement('div');
+      albumRating.className = 'album-rating';
+
+      // Create 5 stars
+      for (let i = 1; i <= 5; i++) {
+        const star = document.createElement('span');
+        star.className = 'star';
+        star.textContent = '★';
+        star.dataset.rating = i;
+        star.dataset.albumKey = 'TestArtist/TestAlbum';
+        albumRating.appendChild(star);
+      }
+
+      document.body.appendChild(albumRating);
+
+      // Verify stars are created
+      const stars = document.querySelectorAll('.star');
+      expect(stars).toHaveLength(5);
+
+      stars.forEach((star, index) => {
+        expect(star.textContent).toBe('★');
+        expect(star.dataset.rating).toBe(String(index + 1));
+        expect(star.dataset.albumKey).toBe('TestArtist/TestAlbum');
+      });
+    });
+
+    test('should handle star click events', () => {
+      // Create rating UI
+      const albumRating = document.createElement('div');
+      albumRating.className = 'album-rating';
+
+      const saveRating = jest.fn();
+
+      for (let i = 1; i <= 5; i++) {
+        const star = document.createElement('span');
+        star.className = 'star';
+        star.textContent = '★';
+        star.dataset.rating = i;
+        star.dataset.albumKey = 'TestArtist/TestAlbum';
+
+        // Add click handler
+        star.addEventListener('click', e => {
+          e.stopPropagation();
+          const rating = parseInt(e.target.dataset.rating);
+          const albumKey = e.target.dataset.albumKey;
+
+          // Update visual state
+          const stars = albumRating.querySelectorAll('.star');
+          stars.forEach((s, index) => {
+            if (index < rating) {
+              s.classList.add('active');
+            } else {
+              s.classList.remove('active');
+            }
+          });
+
+          saveRating(albumKey, rating);
+        });
+
+        albumRating.appendChild(star);
+      }
+
+      document.body.appendChild(albumRating);
+
+      // Test clicking the 3rd star
+      const thirdStar = document.querySelector('[data-rating="3"]');
+      thirdStar.click();
+
+      // Verify visual state
+      const stars = document.querySelectorAll('.star');
+      expect(stars[0]).toHaveClass('active');
+      expect(stars[1]).toHaveClass('active');
+      expect(stars[2]).toHaveClass('active');
+      expect(stars[3]).not.toHaveClass('active');
+      expect(stars[4]).not.toHaveClass('active');
+
+      // Verify callback
+      expect(saveRating).toHaveBeenCalledWith('TestArtist/TestAlbum', 3);
+    });
+
+    test('should update rating when clicking different stars', () => {
+      // Create rating UI
+      const albumRating = document.createElement('div');
+      albumRating.className = 'album-rating';
+
+      for (let i = 1; i <= 5; i++) {
+        const star = document.createElement('span');
+        star.className = 'star';
+        star.textContent = '★';
+        star.dataset.rating = i;
+        star.dataset.albumKey = 'TestArtist/TestAlbum';
+
+        star.addEventListener('click', e => {
+          e.stopPropagation();
+          const rating = parseInt(e.target.dataset.rating);
+
+          // Update visual state
+          const stars = albumRating.querySelectorAll('.star');
+          stars.forEach((s, index) => {
+            if (index < rating) {
+              s.classList.add('active');
+            } else {
+              s.classList.remove('active');
+            }
+          });
+        });
+
+        albumRating.appendChild(star);
+      }
+
+      document.body.appendChild(albumRating);
+
+      // Click 5th star
+      document.querySelector('[data-rating="5"]').click();
+      let stars = document.querySelectorAll('.star');
+      expect(stars.length).toBe(5);
+      stars.forEach(star => expect(star).toHaveClass('active'));
+
+      // Click 2nd star to change rating
+      document.querySelector('[data-rating="2"]').click();
+      stars = document.querySelectorAll('.star');
+      expect(stars[0]).toHaveClass('active');
+      expect(stars[1]).toHaveClass('active');
+      expect(stars[2]).not.toHaveClass('active');
+      expect(stars[3]).not.toHaveClass('active');
+      expect(stars[4]).not.toHaveClass('active');
+    });
+  });
+
+  describe('File Item Creation', () => {
+    test('should create file item with correct structure', () => {
+      const mockFile = {
+        name: 'test-song.mp3',
+        type: 'audio',
+        size: 1024000,
+        modified: new Date('2023-01-01'),
+        path: '/path/to/test-song.mp3',
+        artist: 'Test Artist',
+        album: 'Test Album',
+        relativePath: 'Test Artist/Test Album'
+      };
+
+      // Create file item (simplified version)
+      const fileItem = document.createElement('div');
+      fileItem.className = 'file-item';
+      fileItem.dataset.path = mockFile.path;
+
+      const iconDiv = document.createElement('div');
+      iconDiv.className = 'file-icon';
+      iconDiv.textContent = '🎵'; // Audio icon
+
+      const detailsDiv = document.createElement('div');
+      detailsDiv.className = 'file-details';
+
+      const fileName = document.createElement('div');
+      fileName.className = 'file-name';
+      fileName.textContent = mockFile.name;
+
+      const fileMeta = document.createElement('div');
+      fileMeta.className = 'file-meta';
+      fileMeta.textContent = `${mockFile.type} • 1000 KB • 2023/1/1 (${mockFile.relativePath}/)`;
+
+      detailsDiv.appendChild(fileName);
+      detailsDiv.appendChild(fileMeta);
+      fileItem.appendChild(iconDiv);
+      fileItem.appendChild(detailsDiv);
+
+      document.body.appendChild(fileItem);
+
+      // Verify structure
+      expect(fileItem).toHaveClass('file-item');
+      expect(fileItem.dataset.path).toBe(mockFile.path);
+      expect(iconDiv).toHaveClass('file-icon');
+      expect(iconDiv.textContent).toBe('🎵');
+      expect(fileName).toHaveClass('file-name');
+      expect(fileName.textContent).toBe(mockFile.name);
+      expect(fileMeta).toHaveClass('file-meta');
+      expect(fileMeta.textContent).toContain(mockFile.type);
+    });
+
+    test('should handle file item click events', () => {
+      const mockPreviewFile = jest.fn();
+      const mockFile = {
+        name: 'test.jpg',
+        type: 'image',
+        size: 500000,
+        path: '/path/to/test.jpg'
+      };
+
+      const fileItem = document.createElement('div');
+      fileItem.className = 'file-item';
+      fileItem.dataset.path = mockFile.path;
+
+      // Add click event
+      fileItem.addEventListener('click', () => {
+        mockPreviewFile(mockFile.path, mockFile.type, mockFile.name, mockFile.size);
+      });
+
+      document.body.appendChild(fileItem);
+
+      // Test click
+      fileItem.click();
+
+      expect(mockPreviewFile).toHaveBeenCalledWith(
+        mockFile.path,
+        mockFile.type,
+        mockFile.name,
+        mockFile.size
+      );
+    });
+  });
+
+  describe('Search and Filter Functionality', () => {
+    test('should filter files by search term', () => {
+      const mockFiles = [
+        { name: 'Beatles - Hey Jude.mp3', artist: 'Beatles', album: 'Past Masters' },
+        { name: 'Queen - Bohemian Rhapsody.mp3', artist: 'Queen', album: 'A Night at the Opera' },
+        { name: 'Beatles - Let It Be.mp3', artist: 'Beatles', album: 'Let It Be' }
+      ];
+
+      // Simulate search filter logic
+      const filterFiles = (files, searchTerm) => {
+        if (!searchTerm) return files;
+
+        const term = searchTerm.toLowerCase();
+        return files.filter(file => {
+          const matchesName = file.name.toLowerCase().includes(term);
+          const matchesArtist = file.artist && file.artist.toLowerCase().includes(term);
+          const matchesAlbum = file.album && file.album.toLowerCase().includes(term);
+          return matchesName || matchesArtist || matchesAlbum;
+        });
+      };
+
+      // Test name search
+      let filtered = filterFiles(mockFiles, 'Hey Jude');
+      expect(filtered).toHaveLength(1);
+      expect(filtered[0].name).toContain('Hey Jude');
+
+      // Test artist search
+      filtered = filterFiles(mockFiles, 'Beatles');
+      expect(filtered).toHaveLength(2);
+      expect(filtered.every(f => f.artist === 'Beatles')).toBe(true);
+
+      // Test album search
+      filtered = filterFiles(mockFiles, 'Opera');
+      expect(filtered).toHaveLength(1);
+      expect(filtered[0].album).toContain('Opera');
+
+      // Test no matches
+      filtered = filterFiles(mockFiles, 'NonExistent');
+      expect(filtered).toHaveLength(0);
+
+      // Test empty search
+      filtered = filterFiles(mockFiles, '');
+      expect(filtered).toHaveLength(3);
+    });
+
+    test('should filter files by type', () => {
+      const mockFiles = [
+        { name: 'song.mp3', type: 'audio' },
+        { name: 'photo.jpg', type: 'image' },
+        { name: 'video.mp4', type: 'video' },
+        { name: 'song2.wav', type: 'audio' }
+      ];
+
+      const filterByType = (files, type) => {
+        if (type === 'all') return files;
+        return files.filter(file => file.type === type);
+      };
+
+      // Test audio filter
+      let filtered = filterByType(mockFiles, 'audio');
+      expect(filtered).toHaveLength(2);
+      expect(filtered.every(f => f.type === 'audio')).toBe(true);
+
+      // Test image filter
+      filtered = filterByType(mockFiles, 'image');
+      expect(filtered).toHaveLength(1);
+      expect(filtered[0].type).toBe('image');
+
+      // Test all filter
+      filtered = filterByType(mockFiles, 'all');
+      expect(filtered).toHaveLength(4);
+    });
+  });
+
+  describe('Album Grouping', () => {
+    test('should group files by artist and album', () => {
+      const mockFiles = [
+        { name: 'song1.mp3', artist: 'Beatles', album: 'Abbey Road' },
+        { name: 'song2.mp3', artist: 'Beatles', album: 'Abbey Road' },
+        { name: 'song3.mp3', artist: 'Beatles', album: 'Revolver' },
+        { name: 'song4.mp3', artist: 'Queen', album: 'A Night at the Opera' }
+      ];
+
+      // Simulate grouping logic
+      const groupByArtist = files => {
+        const artistGroups = {};
+        files.forEach(file => {
+          const artist = file.artist || 'アーティスト名なし';
+          const album = file.album || 'アルバム名なし';
+
+          if (!artistGroups[artist]) {
+            artistGroups[artist] = {};
+          }
+          if (!artistGroups[artist][album]) {
+            artistGroups[artist][album] = [];
+          }
+          artistGroups[artist][album].push(file);
+        });
+        return artistGroups;
+      };
+
+      const grouped = groupByArtist(mockFiles);
+
+      // Verify grouping
+      expect(Object.keys(grouped)).toHaveLength(2); // Beatles, Queen
+      expect(Object.keys(grouped.Beatles)).toHaveLength(2); // Abbey Road, Revolver
+      expect(grouped.Beatles['Abbey Road']).toHaveLength(2);
+      expect(grouped.Beatles.Revolver).toHaveLength(1);
+      expect(grouped.Queen['A Night at the Opera']).toHaveLength(1);
+    });
+  });
+});

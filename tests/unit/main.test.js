@@ -101,4 +101,80 @@ describe('Main Process Functions', () => {
       expect(getFileType('mp4')).toBe('unknown');
     });
   });
+
+  describe('Error handling', () => {
+    test('should handle invalid input types gracefully', () => {
+      // Test parseDirectoryHierarchy with various invalid inputs
+      expect(parseDirectoryHierarchy(123)).toEqual({ artist: null, album: null });
+      expect(parseDirectoryHierarchy({})).toEqual({ artist: null, album: null });
+      expect(parseDirectoryHierarchy([])).toEqual({ artist: null, album: null });
+      expect(parseDirectoryHierarchy(true)).toEqual({ artist: null, album: null });
+    });
+
+    test('should handle special characters in paths', () => {
+      const result = parseDirectoryHierarchy('Artist With Spaces/Album & Title');
+      expect(result).toEqual({
+        artist: 'Artist With Spaces',
+        album: 'Album & Title'
+      });
+    });
+
+    test('should handle Unicode characters in paths', () => {
+      const result = parseDirectoryHierarchy('アーティスト/アルバム名');
+      expect(result).toEqual({
+        artist: 'アーティスト',
+        album: 'アルバム名'
+      });
+    });
+
+    test('should handle very long path strings', () => {
+      const longArtist = 'A'.repeat(1000);
+      const longAlbum = 'B'.repeat(1000);
+      const result = parseDirectoryHierarchy(`${longArtist}/${longAlbum}`);
+      expect(result).toEqual({
+        artist: longArtist,
+        album: longAlbum
+      });
+    });
+
+    test('should handle mixed path separators', () => {
+      const result = parseDirectoryHierarchy('Artist\\Album/Song');
+      expect(result).toEqual({
+        artist: 'Artist',
+        album: 'Album'
+      });
+    });
+
+    test('should handle multiple consecutive separators', () => {
+      const result = parseDirectoryHierarchy('Artist//Album');
+      expect(result).toEqual({
+        artist: 'Artist',
+        album: ''
+      });
+    });
+
+    test('should handle getFileType with invalid inputs', () => {
+      expect(getFileType(null)).toBe('unknown');
+      expect(getFileType(undefined)).toBe('unknown');
+      expect(getFileType(123)).toBe('unknown');
+      expect(getFileType({})).toBe('unknown');
+      expect(getFileType([])).toBe('unknown');
+    });
+
+    test('should handle getFileType with special characters', () => {
+      expect(getFileType('.jp@g')).toBe('unknown');
+      expect(getFileType('.m4a!')).toBe('unknown');
+      expect(getFileType('..jpg')).toBe('unknown');
+    });
+
+    test('should handle extremely long extensions', () => {
+      const longExt = '.js' + 'x'.repeat(1000);
+      expect(getFileType(longExt)).toBe('unknown');
+    });
+
+    test('should handle extensions with Unicode characters', () => {
+      expect(getFileType('.jpgあ')).toBe('unknown');
+      expect(getFileType('.мp3')).toBe('unknown');
+    });
+  });
 });
