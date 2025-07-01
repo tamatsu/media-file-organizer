@@ -213,6 +213,22 @@
             font-size: 12px;
             color: #666;
         }
+        .album-rating {
+            margin-top: 4px;
+        }
+        .star {
+            color: #ddd;
+            font-size: 16px;
+            cursor: pointer;
+            margin-right: 2px;
+            transition: color 0.2s;
+        }
+        .star:hover {
+            color: #ffa500;
+        }
+        .star.active {
+            color: #ffd700;
+        }
         .album-toggle {
             font-size: 14px;
             color: #666;
@@ -286,7 +302,6 @@
                         <button class="filter-btn" data-type="image">🖼️ 画像</button>
                         <button class="filter-btn" data-type="video">🎬 動画</button>
                         <button class="filter-btn" data-type="audio">🎵 音声</button>
-                        <button class="filter-btn" id="albumGroupBtn" data-group="album">📁 アルバム別</button>
                         <button class="filter-btn" id="artistGroupBtn" data-group="artist">🎤 アーティスト別</button>
                     </div>
                     <div class="file-count" id="fileCount"></div>
@@ -313,8 +328,8 @@
         let allFiles = [];
         let currentFilter = 'all';
         let currentSearch = '';
-        let groupByAlbum = false;
         let groupByArtist = false;
+        let groupByAlbum = false;
         
         async function selectFolder() {
             const fileList = document.getElementById('fileList');
@@ -476,30 +491,13 @@
             // Setup filter buttons
             filterButtons.forEach(btn => {
                 btn.addEventListener('click', () => {
-                    if (btn.dataset.group === 'album') {
-                        // Toggle album grouping
-                        groupByAlbum = !groupByAlbum;
-                        btn.classList.toggle('active');
-                        
-                        // Reset other grouping and filters
-                        if (groupByAlbum) {
-                            groupByArtist = false;
-                            document.getElementById('artistGroupBtn').classList.remove('active');
-                            filterButtons.forEach(b => {
-                                if (b.dataset.type) b.classList.remove('active');
-                            });
-                            document.querySelector('[data-type="all"]').classList.add('active');
-                            currentFilter = 'all';
-                        }
-                    } else if (btn.dataset.group === 'artist') {
+                    if (btn.dataset.group === 'artist') {
                         // Toggle artist grouping
                         groupByArtist = !groupByArtist;
                         btn.classList.toggle('active');
                         
-                        // Reset other grouping and filters
+                        // Reset filters when grouping by artist
                         if (groupByArtist) {
-                            groupByAlbum = false;
-                            document.getElementById('albumGroupBtn').classList.remove('active');
                             filterButtons.forEach(b => {
                                 if (b.dataset.type) b.classList.remove('active');
                             });
@@ -508,10 +506,8 @@
                         }
                     } else {
                         // Regular filter buttons
-                        if (groupByAlbum || groupByArtist) {
-                            groupByAlbum = false;
+                        if (groupByArtist) {
                             groupByArtist = false;
-                            document.getElementById('albumGroupBtn').classList.remove('active');
                             document.getElementById('artistGroupBtn').classList.remove('active');
                         }
                         filterButtons.forEach(b => {
@@ -560,8 +556,6 @@
             // Display files (grouped or normal)
             if (groupByArtist) {
                 displayArtistGroups(filteredFiles);
-            } else if (groupByAlbum) {
-                displayAlbumGroups(filteredFiles);
             } else {
                 displayFiles({
                     folder: currentFolder.folder,
@@ -619,6 +613,42 @@
                 
                 albumInfo.appendChild(albumTitle);
                 albumInfo.appendChild(albumMeta);
+                
+                // Add star rating UI
+                const albumRating = document.createElement('div');
+                albumRating.className = 'album-rating';
+                
+                for (let i = 1; i <= 5; i++) {
+                    const star = document.createElement('span');
+                    star.className = 'star';
+                    star.textContent = '★';
+                    star.dataset.rating = i;
+                    star.dataset.albumKey = `${artistName}/${albumName}`;
+                    
+                    // Add click handler for star rating
+                    star.addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        const rating = parseInt(e.target.dataset.rating);
+                        const albumKey = e.target.dataset.albumKey;
+                        
+                        // Update visual state
+                        const stars = albumRating.querySelectorAll('.star');
+                        stars.forEach((s, index) => {
+                            if (index < rating) {
+                                s.classList.add('active');
+                            } else {
+                                s.classList.remove('active');
+                            }
+                        });
+                        
+                        // Save rating (placeholder for now)
+                        console.log(`Rating ${albumKey}: ${rating} stars`);
+                    });
+                    
+                    albumRating.appendChild(star);
+                }
+                
+                albumInfo.appendChild(albumRating);
                 
                 const albumToggle = document.createElement('div');
                 albumToggle.className = 'album-toggle';
