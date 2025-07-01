@@ -10,7 +10,9 @@
     "build:win": "electron-builder --win",
     "build:mac": "electron-builder --mac",
     "build:linux": "electron-builder --linux",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "keywords": [
     "electron",
@@ -20,8 +22,11 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "electron": "^28.3.3",
-    "electron-builder": "^24.0.0"
+    "electron-builder": "^24.0.0",
+    "jest": "^30.0.3",
+    "jest-environment-jsdom": "^30.0.2"
   },
   "build": {
     "appId": "com.example.media-file-organizer",
@@ -55,6 +60,5 @@
       "target": "AppImage",
       "icon": "build/icon.png"
     }
-  },
-  "dependencies": {}
+  }
 }
