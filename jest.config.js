@@ -22,6 +22,11 @@ module.exports = {
       displayName: 'sorting-filtering',
       testEnvironment: 'jsdom',
       testMatch: ['<rootDir>/tests/unit/sorting-filtering.test.js']
+    },
+    {
+      displayName: 'ui-integration',
+      testEnvironment: 'jsdom',
+      testMatch: ['<rootDir>/tests/integration/ui.test.js']
     }
   ]
 };

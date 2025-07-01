@@ -822,12 +822,17 @@
             const albumRating = document.createElement('div');
             albumRating.className = 'album-rating';
 
+            // Get artist name from the first file in the album for rating key
+            const firstFile = albumFiles[0];
+            const artistName = firstFile.artist || 'アーティスト名なし';
+            const albumKey = `${artistName}/${albumName}`;
+
             for (let i = 1; i <= 5; i++) {
               const star = document.createElement('span');
               star.className = 'star';
               star.textContent = '★';
               star.dataset.rating = i;
-              star.dataset.albumKey = `${artistName}/${albumName}`;
+              star.dataset.albumKey = albumKey;
 
               // Add click handler for star rating
               star.addEventListener('click', async e => {
@@ -847,6 +852,7 @@
 
                 // Save rating
                 saveRating(albumKey, rating);
+                console.log(`Rating saved: ${albumKey} = ${rating} stars`);
               });
 
               albumRating.appendChild(star);
@@ -855,7 +861,8 @@
             albumInfo.appendChild(albumRating);
 
             // Load and display saved rating
-            const savedRating = loadRating(`${artistName}/${albumName}`);
+            const savedRating = loadRating(albumKey);
+            console.log(`Loading rating for album: ${albumKey} = ${savedRating} stars`);
             if (savedRating > 0) {
               const stars = albumRating.querySelectorAll('.star');
               stars.forEach((s, index) => {
@@ -1037,6 +1044,7 @@
 
                   // Save rating
                   saveRating(albumKey, rating);
+                  console.log(`Rating saved: ${albumKey} = ${rating} stars`);
                 });
 
                 albumRating.appendChild(star);
@@ -1045,7 +1053,9 @@
               albumInfo.appendChild(albumRating);
 
               // Load and display saved rating
-              const savedRating = loadRating(`${artistName}/${albumName}`);
+              const albumKey = `${artistName}/${albumName}`;
+              const savedRating = loadRating(albumKey);
+              console.log(`Loading rating for album: ${albumKey} = ${savedRating} stars`);
               if (savedRating > 0) {
                 const stars = albumRating.querySelectorAll('.star');
                 stars.forEach((s, index) => {

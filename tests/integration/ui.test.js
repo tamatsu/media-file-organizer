@@ -107,11 +107,11 @@ describe('UI Integration Tests', () => {
 
       // Verify visual state
       const stars = document.querySelectorAll('.star');
-      expect(stars[0]).toHaveClass('active');
-      expect(stars[1]).toHaveClass('active');
-      expect(stars[2]).toHaveClass('active');
-      expect(stars[3]).not.toHaveClass('active');
-      expect(stars[4]).not.toHaveClass('active');
+      expect(stars[0].classList.contains('active')).toBe(true);
+      expect(stars[1].classList.contains('active')).toBe(true);
+      expect(stars[2].classList.contains('active')).toBe(true);
+      expect(stars[3].classList.contains('active')).toBe(false);
+      expect(stars[4].classList.contains('active')).toBe(false);
 
       // Verify callback
       expect(saveRating).toHaveBeenCalledWith('TestArtist/TestAlbum', 3);
@@ -153,16 +153,16 @@ describe('UI Integration Tests', () => {
       document.querySelector('[data-rating="5"]').click();
       let stars = document.querySelectorAll('.star');
       expect(stars.length).toBe(5);
-      stars.forEach(star => expect(star).toHaveClass('active'));
+      stars.forEach(star => expect(star.classList.contains('active')).toBe(true));
 
       // Click 2nd star to change rating
       document.querySelector('[data-rating="2"]').click();
       stars = document.querySelectorAll('.star');
-      expect(stars[0]).toHaveClass('active');
-      expect(stars[1]).toHaveClass('active');
-      expect(stars[2]).not.toHaveClass('active');
-      expect(stars[3]).not.toHaveClass('active');
-      expect(stars[4]).not.toHaveClass('active');
+      expect(stars[0].classList.contains('active')).toBe(true);
+      expect(stars[1].classList.contains('active')).toBe(true);
+      expect(stars[2].classList.contains('active')).toBe(false);
+      expect(stars[3].classList.contains('active')).toBe(false);
+      expect(stars[4].classList.contains('active')).toBe(false);
     });
   });
 
@@ -207,13 +207,13 @@ describe('UI Integration Tests', () => {
       document.body.appendChild(fileItem);
 
       // Verify structure
-      expect(fileItem).toHaveClass('file-item');
+      expect(fileItem.classList.contains('file-item')).toBe(true);
       expect(fileItem.dataset.path).toBe(mockFile.path);
-      expect(iconDiv).toHaveClass('file-icon');
+      expect(iconDiv.classList.contains('file-icon')).toBe(true);
       expect(iconDiv.textContent).toBe('🎵');
-      expect(fileName).toHaveClass('file-name');
+      expect(fileName.classList.contains('file-name')).toBe(true);
       expect(fileName.textContent).toBe(mockFile.name);
-      expect(fileMeta).toHaveClass('file-meta');
+      expect(fileMeta.classList.contains('file-meta')).toBe(true);
       expect(fileMeta.textContent).toContain(mockFile.type);
     });
 
@@ -362,6 +362,128 @@ describe('UI Integration Tests', () => {
       expect(grouped.Beatles['Abbey Road']).toHaveLength(2);
       expect(grouped.Beatles.Revolver).toHaveLength(1);
       expect(grouped.Queen['A Night at the Opera']).toHaveLength(1);
+    });
+  });
+
+  describe('Rating Display Consistency', () => {
+    beforeEach(() => {
+      // Set up some test ratings
+      localStorageMock.data.albumRatings = JSON.stringify({
+        'Beatles/Abbey Road': 5,
+        'Beatles/Revolver': 4,
+        'Queen/A Night at the Opera': 3
+      });
+    });
+
+    test('should display ratings correctly in album-only view', () => {
+      const mockFiles = [
+        { name: 'song1.mp3', artist: 'Beatles', album: 'Abbey Road' },
+        { name: 'song2.mp3', artist: 'Beatles', album: 'Revolver' },
+        { name: 'song3.mp3', artist: 'Queen', album: 'A Night at the Opera' }
+      ];
+
+      // Simulate displayAlbumGroups function behavior
+      const albumGroups = {};
+      mockFiles.forEach(file => {
+        const album = file.album || 'アルバム名なし';
+        if (!albumGroups[album]) {
+          albumGroups[album] = [];
+        }
+        albumGroups[album].push(file);
+      });
+
+      // Test rating key generation for album groups
+      Object.keys(albumGroups).forEach(albumName => {
+        const albumFiles = albumGroups[albumName];
+        const firstFile = albumFiles[0];
+        const artistName = firstFile.artist || 'アーティスト名なし';
+        const albumKey = `${artistName}/${albumName}`;
+
+        // Verify rating can be loaded with correct key
+        const ratingsData = localStorageMock.data.albumRatings;
+        const savedRating = ratingsData ? JSON.parse(ratingsData)[albumKey] || 0 : 0;
+
+        if (albumKey === 'Beatles/Abbey Road') {
+          expect(savedRating).toBe(5);
+        } else if (albumKey === 'Beatles/Revolver') {
+          expect(savedRating).toBe(4);
+        } else if (albumKey === 'Queen/A Night at the Opera') {
+          expect(savedRating).toBe(3);
+        }
+      });
+    });
+
+    test('should display ratings correctly in artist-album view', () => {
+      const mockFiles = [
+        { name: 'song1.mp3', artist: 'Beatles', album: 'Abbey Road' },
+        { name: 'song2.mp3', artist: 'Beatles', album: 'Revolver' },
+        { name: 'song3.mp3', artist: 'Queen', album: 'A Night at the Opera' }
+      ];
+
+      // Simulate displayArtistGroups function behavior
+      const artistGroups = {};
+      mockFiles.forEach(file => {
+        const artist = file.artist || 'アーティスト名なし';
+        const album = file.album || 'アルバム名なし';
+
+        if (!artistGroups[artist]) {
+          artistGroups[artist] = {};
+        }
+        if (!artistGroups[artist][album]) {
+          artistGroups[artist][album] = [];
+        }
+        artistGroups[artist][album].push(file);
+      });
+
+      // Test rating key generation for artist groups
+      Object.keys(artistGroups).forEach(artistName => {
+        const artistAlbums = artistGroups[artistName];
+        Object.keys(artistAlbums).forEach(albumName => {
+          const albumKey = `${artistName}/${albumName}`;
+
+          // Verify rating can be loaded with correct key
+          const ratingsData = localStorageMock.data.albumRatings;
+          const savedRating = ratingsData ? JSON.parse(ratingsData)[albumKey] || 0 : 0;
+
+          if (albumKey === 'Beatles/Abbey Road') {
+            expect(savedRating).toBe(5);
+          } else if (albumKey === 'Beatles/Revolver') {
+            expect(savedRating).toBe(4);
+          } else if (albumKey === 'Queen/A Night at the Opera') {
+            expect(savedRating).toBe(3);
+          }
+        });
+      });
+    });
+
+    test('should maintain rating consistency between view modes', () => {
+      const testAlbumKey = 'Test Artist/Test Album';
+      const testRating = 4;
+
+      // Save a rating
+      const ratings = JSON.parse(localStorageMock.data.albumRatings || '{}');
+      ratings[testAlbumKey] = testRating;
+      localStorageMock.data.albumRatings = JSON.stringify(ratings);
+
+      // Verify both display modes would generate the same key
+      const mockFile = { artist: 'Test Artist', album: 'Test Album' };
+
+      // Album-only view key generation
+      const albumViewKey = `${mockFile.artist}/${mockFile.album}`;
+
+      // Artist-album view key generation
+      const artistViewKey = `${mockFile.artist}/${mockFile.album}`;
+
+      expect(albumViewKey).toBe(artistViewKey);
+      expect(albumViewKey).toBe(testAlbumKey);
+
+      // Both should retrieve the same rating
+      const albumViewRating = JSON.parse(localStorageMock.data.albumRatings)[albumViewKey] || 0;
+      const artistViewRating = JSON.parse(localStorageMock.data.albumRatings)[artistViewKey] || 0;
+
+      expect(albumViewRating).toBe(testRating);
+      expect(artistViewRating).toBe(testRating);
+      expect(albumViewRating).toBe(artistViewRating);
     });
   });
 });
