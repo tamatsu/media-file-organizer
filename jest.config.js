@@ -17,6 +17,11 @@ module.exports = {
       displayName: 'renderer',
       testEnvironment: 'jsdom',
       testMatch: ['<rootDir>/tests/unit/renderer.test.js']
+    },
+    {
+      displayName: 'sorting-filtering',
+      testEnvironment: 'jsdom',
+      testMatch: ['<rootDir>/tests/unit/sorting-filtering.test.js']
     }
   ]
 };
