@@ -3,16 +3,22 @@
 
 // Extract functions from index.html for testing
 function getFileIcon(type) {
-  switch(type) {
-    case 'image': return '🖼️';
-    case 'video': return '🎬';
-    case 'audio': return '🎵';
-    default: return '📄';
+  switch (type) {
+    case 'image':
+      return '🖼️';
+    case 'video':
+      return '🎬';
+    case 'audio':
+      return '🎵';
+    default:
+      return '📄';
   }
 }
 
 function formatFileSize(bytes) {
-  if (bytes === 0) return '0 B';
+  if (bytes === 0) {
+    return '0 B';
+  }
   const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));

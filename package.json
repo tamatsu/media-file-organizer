@@ -12,7 +12,11 @@
     "build:linux": "electron-builder --linux",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "lint": "eslint . --ext .js",
+    "lint:fix": "eslint . --ext .js --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "keywords": [
     "electron",
@@ -25,8 +29,12 @@
     "@types/jest": "^30.0.0",
     "electron": "^28.3.3",
     "electron-builder": "^24.0.0",
+    "eslint": "^9.30.0",
+    "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-prettier": "^5.5.1",
     "jest": "^30.0.3",
-    "jest-environment-jsdom": "^30.0.2"
+    "jest-environment-jsdom": "^30.0.2",
+    "prettier": "^3.6.2"
   },
   "build": {
     "appId": "com.example.media-file-organizer",
