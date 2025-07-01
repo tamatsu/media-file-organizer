@@ -259,7 +259,9 @@ describe('UI Integration Tests', () => {
 
       // Simulate search filter logic
       const filterFiles = (files, searchTerm) => {
-        if (!searchTerm) return files;
+        if (!searchTerm) {
+          return files;
+        }
 
         const term = searchTerm.toLowerCase();
         return files.filter(file => {
@@ -303,7 +305,9 @@ describe('UI Integration Tests', () => {
       ];
 
       const filterByType = (files, type) => {
-        if (type === 'all') return files;
+        if (type === 'all') {
+          return files;
+        }
         return files.filter(file => file.type === type);
       };
 

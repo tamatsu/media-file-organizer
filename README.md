@@ -20,12 +20,14 @@ Electronでローカルのメディアファイルを整理するアプリケー
 ## サポートファイル形式
 
 ### 画像
+
 - JPEG (.jpg, .jpeg)
 - PNG (.png)
 - GIF (.gif)
 - WebP (.webp)
 
 ### 動画
+
 - MP4 (.mp4)
 - WebM (.webm)
 - OGV (.ogv)
@@ -33,6 +35,7 @@ Electronでローカルのメディアファイルを整理するアプリケー
 - MOV (.mov)
 
 ### 音声
+
 - MP3 (.mp3)
 - WAV (.wav)
 - OGG (.ogg)
@@ -77,6 +80,28 @@ npm run build:mac
 
 # Linux用ビルド
 npm run build:linux
+```
+
+### 開発・品質管理コマンド
+
+```bash
+# テスト実行
+npm test
+npm run test:watch    # テストファイル監視モード
+npm run test:coverage # カバレッジレポート付き
+
+# コード品質チェック
+npm run lint          # ESLintでコード解析
+npm run lint:fix      # ESLint自動修正
+npm run format        # Prettier自動フォーマット
+npm run format:check  # フォーマットチェックのみ
+
+# 包括的な品質チェック
+npm run validate      # フォーマット・lint・型チェック・テストを一括実行
+npm run validate:fix  # 自動修正可能な問題を修正してから一括実行
+npm run ci            # CI環境用（validateと同じ）
+npm run check         # validateと同じ
+npm run precommit     # コミット前実行推奨（validate:fixと同じ）
 ```
 
 ### WSL環境でのWindows向けビルド

@@ -1,4 +1,5 @@
 // Rating system unit tests
+/* global localStorage */
 
 // Mock localStorage for testing
 const localStorageMock = {
@@ -108,10 +109,7 @@ describe('Rating System', () => {
 
       saveRating('Artist/Album', 4);
 
-      expect(console.error).toHaveBeenCalledWith(
-        'Error saving rating:',
-        expect.any(Error)
-      );
+      expect(console.error).toHaveBeenCalledWith('Error saving rating:', expect.any(Error));
     });
   });
 
@@ -143,10 +141,7 @@ describe('Rating System', () => {
       const rating = loadRating('Artist/Album');
 
       expect(rating).toBe(0);
-      expect(console.error).toHaveBeenCalledWith(
-        'Error loading rating:',
-        expect.any(Error)
-      );
+      expect(console.error).toHaveBeenCalledWith('Error loading rating:', expect.any(Error));
     });
 
     test('should handle corrupted JSON data', () => {
@@ -155,10 +150,7 @@ describe('Rating System', () => {
       const rating = loadRating('Artist/Album');
 
       expect(rating).toBe(0);
-      expect(console.error).toHaveBeenCalledWith(
-        'Error loading all ratings:',
-        expect.any(Error)
-      );
+      expect(console.error).toHaveBeenCalledWith('Error loading all ratings:', expect.any(Error));
     });
   });
 
@@ -188,10 +180,7 @@ describe('Rating System', () => {
       const ratings = loadAllRatings();
 
       expect(ratings).toEqual({});
-      expect(console.error).toHaveBeenCalledWith(
-        'Error loading all ratings:',
-        expect.any(Error)
-      );
+      expect(console.error).toHaveBeenCalledWith('Error loading all ratings:', expect.any(Error));
     });
 
     test('should handle corrupted JSON data', () => {
@@ -200,10 +189,7 @@ describe('Rating System', () => {
       const ratings = loadAllRatings();
 
       expect(ratings).toEqual({});
-      expect(console.error).toHaveBeenCalledWith(
-        'Error loading all ratings:',
-        expect.any(Error)
-      );
+      expect(console.error).toHaveBeenCalledWith('Error loading all ratings:', expect.any(Error));
     });
   });
 

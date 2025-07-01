@@ -1,4 +1,5 @@
 // Sorting and filtering functionality tests
+/* global localStorage */
 
 // Mock localStorage for testing
 const localStorageMock = {
@@ -52,7 +53,7 @@ function filterAlbumsByRating(albumGroups, ratingFilter) {
   Object.keys(albumGroups).forEach(artistName => {
     const artistAlbums = albumGroups[artistName];
     const filteredAlbums = {};
-    
+
     Object.keys(artistAlbums).forEach(albumName => {
       const rating = getAlbumRating(artistName, albumName);
       let includeAlbum = false;
@@ -83,11 +84,11 @@ function filterAlbumsByRating(albumGroups, ratingFilter) {
 
 function sortAlbums(albumGroups, sortOption) {
   const sorted = {};
-  
+
   Object.keys(albumGroups).forEach(artistName => {
     const artistAlbums = albumGroups[artistName];
     const albumEntries = Object.entries(artistAlbums);
-    
+
     albumEntries.sort((a, b) => {
       const [albumNameA, filesA] = a;
       const [albumNameB, filesB] = b;
@@ -100,16 +101,24 @@ function sortAlbums(albumGroups, sortOption) {
         case 'name-desc':
           return albumNameB.localeCompare(albumNameA);
         case 'rating-desc':
-          if (ratingB !== ratingA) return ratingB - ratingA;
+          if (ratingB !== ratingA) {
+            return ratingB - ratingA;
+          }
           return albumNameA.localeCompare(albumNameB);
         case 'rating-asc':
-          if (ratingA !== ratingB) return ratingA - ratingB;
+          if (ratingA !== ratingB) {
+            return ratingA - ratingB;
+          }
           return albumNameA.localeCompare(albumNameB);
         case 'filecount-desc':
-          if (filesB.length !== filesA.length) return filesB.length - filesA.length;
+          if (filesB.length !== filesA.length) {
+            return filesB.length - filesA.length;
+          }
           return albumNameA.localeCompare(albumNameB);
         case 'filecount-asc':
-          if (filesA.length !== filesB.length) return filesA.length - filesB.length;
+          if (filesA.length !== filesB.length) {
+            return filesA.length - filesB.length;
+          }
           return albumNameA.localeCompare(albumNameB);
         default:
           return albumNameA.localeCompare(albumNameB);
@@ -162,11 +171,11 @@ describe('Sorting and Filtering Functions', () => {
 
   describe('filterAlbumsByRating', () => {
     const testAlbumGroups = {
-      'Beatles': {
+      Beatles: {
         'Abbey Road': ['song1.mp3', 'song2.mp3'],
-        'Revolver': ['song3.mp3']
+        Revolver: ['song3.mp3']
       },
-      'Queen': {
+      Queen: {
         'A Night at the Opera': ['song4.mp3'],
         'News of the World': ['song5.mp3', 'song6.mp3']
       }
@@ -176,7 +185,7 @@ describe('Sorting and Filtering Functions', () => {
       localStorageMock.data.albumRatings = JSON.stringify({
         'Beatles/Abbey Road': 5,
         'Beatles/Revolver': 3,
-        'Queen/A Night at the Opera': 4,
+        'Queen/A Night at the Opera': 4
         // 'Queen/News of the World' is unrated (0)
       });
     });
@@ -188,14 +197,14 @@ describe('Sorting and Filtering Functions', () => {
 
     test('should filter albums by exact rating (5 stars)', () => {
       const result = filterAlbumsByRating(testAlbumGroups, '5');
-      
+
       expect(Object.keys(result)).toEqual(['Beatles']);
       expect(Object.keys(result.Beatles)).toEqual(['Abbey Road']);
     });
 
     test('should filter albums by minimum rating (3+ stars)', () => {
       const result = filterAlbumsByRating(testAlbumGroups, '3');
-      
+
       expect(Object.keys(result)).toEqual(['Beatles', 'Queen']);
       expect(Object.keys(result.Beatles).sort()).toEqual(['Abbey Road', 'Revolver']);
       expect(Object.keys(result.Queen)).toEqual(['A Night at the Opera']);
@@ -203,7 +212,7 @@ describe('Sorting and Filtering Functions', () => {
 
     test('should filter unrated albums only', () => {
       const result = filterAlbumsByRating(testAlbumGroups, 'unrated');
-      
+
       expect(Object.keys(result)).toEqual(['Queen']);
       expect(Object.keys(result.Queen)).toEqual(['News of the World']);
     });
@@ -226,13 +235,13 @@ describe('Sorting and Filtering Functions', () => {
 
   describe('sortAlbums', () => {
     const testAlbumGroups = {
-      'Queen': {
+      Queen: {
         'A Night at the Opera': ['song1.mp3'],
         'News of the World': ['song2.mp3', 'song3.mp3']
       },
-      'Beatles': {
+      Beatles: {
         'Abbey Road': ['song4.mp3', 'song5.mp3', 'song6.mp3'],
-        'Revolver': ['song7.mp3']
+        Revolver: ['song7.mp3']
       }
     };
 
@@ -247,74 +256,74 @@ describe('Sorting and Filtering Functions', () => {
 
     test('should sort albums by name ascending', () => {
       const result = sortAlbums(testAlbumGroups, 'name-asc');
-      
+
       const beatlesAlbums = Object.keys(result.Beatles);
       expect(beatlesAlbums).toEqual(['Abbey Road', 'Revolver']);
-      
+
       const queenAlbums = Object.keys(result.Queen);
       expect(queenAlbums).toEqual(['A Night at the Opera', 'News of the World']);
     });
 
     test('should sort albums by name descending', () => {
       const result = sortAlbums(testAlbumGroups, 'name-desc');
-      
+
       const beatlesAlbums = Object.keys(result.Beatles);
       expect(beatlesAlbums).toEqual(['Revolver', 'Abbey Road']);
-      
+
       const queenAlbums = Object.keys(result.Queen);
       expect(queenAlbums).toEqual(['News of the World', 'A Night at the Opera']);
     });
 
     test('should sort albums by rating descending', () => {
       const result = sortAlbums(testAlbumGroups, 'rating-desc');
-      
+
       const beatlesAlbums = Object.keys(result.Beatles);
       expect(beatlesAlbums).toEqual(['Abbey Road', 'Revolver']); // 5, 3
-      
+
       const queenAlbums = Object.keys(result.Queen);
       expect(queenAlbums).toEqual(['A Night at the Opera', 'News of the World']); // 4, 2
     });
 
     test('should sort albums by rating ascending', () => {
       const result = sortAlbums(testAlbumGroups, 'rating-asc');
-      
+
       const beatlesAlbums = Object.keys(result.Beatles);
       expect(beatlesAlbums).toEqual(['Revolver', 'Abbey Road']); // 3, 5
-      
+
       const queenAlbums = Object.keys(result.Queen);
       expect(queenAlbums).toEqual(['News of the World', 'A Night at the Opera']); // 2, 4
     });
 
     test('should sort albums by file count descending', () => {
       const result = sortAlbums(testAlbumGroups, 'filecount-desc');
-      
+
       const beatlesAlbums = Object.keys(result.Beatles);
       expect(beatlesAlbums).toEqual(['Abbey Road', 'Revolver']); // 3 files, 1 file
-      
+
       const queenAlbums = Object.keys(result.Queen);
       expect(queenAlbums).toEqual(['News of the World', 'A Night at the Opera']); // 2 files, 1 file
     });
 
     test('should sort albums by file count ascending', () => {
       const result = sortAlbums(testAlbumGroups, 'filecount-asc');
-      
+
       const beatlesAlbums = Object.keys(result.Beatles);
       expect(beatlesAlbums).toEqual(['Revolver', 'Abbey Road']); // 1 file, 3 files
-      
+
       const queenAlbums = Object.keys(result.Queen);
       expect(queenAlbums).toEqual(['A Night at the Opera', 'News of the World']); // 1 file, 2 files
     });
 
     test('should sort artists by name ascending', () => {
       const result = sortAlbums(testAlbumGroups, 'artist-asc');
-      
+
       const artistNames = Object.keys(result);
       expect(artistNames).toEqual(['Beatles', 'Queen']);
     });
 
     test('should sort artists by name descending', () => {
       const result = sortAlbums(testAlbumGroups, 'artist-desc');
-      
+
       const artistNames = Object.keys(result);
       expect(artistNames).toEqual(['Queen', 'Beatles']);
     });
@@ -322,7 +331,7 @@ describe('Sorting and Filtering Functions', () => {
     test('should handle equal ratings with secondary sort by name', () => {
       localStorageMock.data.albumRatings = JSON.stringify({
         'Beatles/Abbey Road': 4,
-        'Beatles/Revolver': 4, // Same rating as Abbey Road
+        'Beatles/Revolver': 4 // Same rating as Abbey Road
       });
 
       const result = sortAlbums(testAlbumGroups, 'rating-desc');
@@ -334,12 +343,12 @@ describe('Sorting and Filtering Functions', () => {
   describe('Integration scenarios', () => {
     test('should combine filtering and sorting correctly', () => {
       const albumGroups = {
-        'Beatles': {
+        Beatles: {
           'Abbey Road': ['song1.mp3'],
-          'Revolver': ['song2.mp3'],
+          Revolver: ['song2.mp3'],
           'Sgt. Pepper': ['song3.mp3']
         },
-        'Queen': {
+        Queen: {
           'A Night at the Opera': ['song4.mp3'],
           'Bohemian Rhapsody': ['song5.mp3']
         }
@@ -349,7 +358,7 @@ describe('Sorting and Filtering Functions', () => {
         'Beatles/Abbey Road': 5,
         'Beatles/Revolver': 3,
         'Beatles/Sgt. Pepper': 4,
-        'Queen/A Night at the Opera': 5,
+        'Queen/A Night at the Opera': 5
         // 'Queen/Bohemian Rhapsody' is unrated
       });
 

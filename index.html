@@ -1,1331 +1,1354 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Media File Organizer</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f5f5f5;
-        }
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .main-content {
-            display: flex;
-            gap: 20px;
-            margin-top: 20px;
-        }
-        .file-list-container {
-            flex: 1;
-            min-width: 400px;
-        }
-        .preview-container {
-            flex: 1;
-            min-width: 400px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            padding: 20px;
-            background-color: #fafafa;
-            position: sticky;
-            top: 20px;
-            height: fit-content;
-            max-height: calc(100vh - 40px);
-            overflow-y: auto;
-        }
-        h1 {
-            color: #333;
-            text-align: center;
-        }
-        .controls {
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        button {
-            background-color: #007acc;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            margin: 5px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #005a9e;
-        }
-        .file-list {
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            min-height: 300px;
-            padding: 10px;
-        }
-        .folder-info {
-            background-color: #f0f8ff;
-            padding: 10px;
-            border-radius: 4px;
-            margin-bottom: 15px;
-            border-left: 4px solid #007acc;
-        }
-        .file-item {
-            display: flex;
-            align-items: center;
-            padding: 8px;
-            margin: 5px 0;
-            border: 1px solid #eee;
-            border-radius: 4px;
-            background-color: #fafafa;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        .file-item:hover {
-            background-color: #e6f3ff;
-        }
-        .file-item.selected {
-            background-color: #cce7ff;
-            border-color: #007acc;
-        }
-        .file-icon {
-            width: 20px;
-            height: 20px;
-            margin-right: 10px;
-            text-align: center;
-        }
-        .file-details {
-            flex: 1;
-        }
-        .file-name {
-            font-weight: bold;
-            color: #333;
-        }
-        .file-meta {
-            font-size: 0.8em;
-            color: #666;
-            margin-top: 2px;
-        }
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: #666;
-        }
-        .preview-content {
-            text-align: center;
-        }
-        .preview-image {
-            max-width: 100%;
-            max-height: 400px;
-            border-radius: 4px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        }
-        .preview-video {
-            width: 100%;
-            max-height: 400px;
-            border-radius: 4px;
-        }
-        .preview-audio {
-            width: 100%;
-            margin-top: 20px;
-        }
-        .preview-info {
-            margin-top: 15px;
-            padding: 10px;
-            background-color: white;
-            border-radius: 4px;
-            text-align: left;
-        }
-        .preview-placeholder {
-            padding: 40px;
-            text-align: center;
-            color: #999;
-            font-style: italic;
-        }
-        .search-filters {
-            margin-bottom: 15px;
-            padding: 15px;
-            background-color: #f8f9fa;
-            border-radius: 4px;
-            border: 1px solid #e9ecef;
-        }
-        .search-input {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            margin-bottom: 10px;
-            font-size: 14px;
-        }
-        .filter-buttons {
-            display: flex;
-            gap: 5px;
-            flex-wrap: wrap;
-        }
-        .filter-btn {
-            padding: 6px 12px;
-            border: 1px solid #ddd;
-            background-color: white;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-            transition: all 0.2s;
-        }
-        .filter-btn:hover {
-            background-color: #e6f3ff;
-        }
-        .filter-btn.active {
-            background-color: #007acc;
-            color: white;
-            border-color: #007acc;
-        }
-        .file-count {
-            font-size: 12px;
-            color: #666;
-            margin-top: 5px;
-        }
-        .sort-rating-controls {
-            margin-top: 10px;
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-        .sort-controls, .rating-filter-controls {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .sort-controls label, .rating-filter-controls label {
-            font-size: 12px;
-            font-weight: bold;
-            color: #333;
-            white-space: nowrap;
-        }
-        .sort-select, .rating-filter {
-            padding: 4px 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 12px;
-            background-color: white;
-            cursor: pointer;
-            min-width: 140px;
-        }
-        .sort-select:focus, .rating-filter:focus {
-            outline: none;
-            border-color: #007acc;
-            box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
-        }
-        .album-group {
-            margin-bottom: 20px;
-            border: 1px solid #e0e0e0;
-            border-radius: 6px;
-            overflow: hidden;
-        }
-        .album-header {
-            background-color: #f8f9fa;
-            padding: 12px 15px;
-            border-bottom: 1px solid #e0e0e0;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            user-select: none;
-        }
-        .album-header:hover {
-            background-color: #e9ecef;
-        }
-        .album-title {
-            font-weight: bold;
-            color: #333;
-        }
-        .album-meta {
-            font-size: 12px;
-            color: #666;
-        }
-        .album-rating {
-            margin-top: 4px;
-        }
-        .star {
-            color: #ddd;
-            font-size: 16px;
-            cursor: pointer;
-            margin-right: 2px;
-            transition: color 0.2s;
-        }
-        .star:hover {
-            color: #ffa500;
-        }
-        .star.active {
-            color: #ffd700;
-        }
-        .album-toggle {
-            font-size: 14px;
-            color: #666;
-        }
-        .album-files {
-            padding: 10px;
-        }
-        .album-files.collapsed {
-            display: none;
-        }
-        .artist-group {
-            margin-bottom: 25px;
-            border: 2px solid #d0d7de;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        .artist-header {
-            background-color: #f6f8fa;
-            padding: 15px 18px;
-            border-bottom: 2px solid #d0d7de;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            user-select: none;
-        }
-        .artist-header:hover {
-            background-color: #eef2f5;
-        }
-        .artist-title {
-            font-weight: bold;
-            font-size: 16px;
-            color: #1f2328;
-        }
-        .artist-meta {
-            font-size: 13px;
-            color: #656d76;
-        }
-        .artist-albums {
-            padding: 15px;
-            background-color: #ffffff;
-        }
-        .artist-albums.collapsed {
-            display: none;
-        }
-        .nested-album {
-            margin-bottom: 15px;
-            border: 1px solid #e1e4e8;
-            border-radius: 6px;
-            overflow: hidden;
-        }
-        .nested-album:last-child {
-            margin-bottom: 0;
-        }
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        background-color: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      .main-content {
+        display: flex;
+        gap: 20px;
+        margin-top: 20px;
+      }
+      .file-list-container {
+        flex: 1;
+        min-width: 400px;
+      }
+      .preview-container {
+        flex: 1;
+        min-width: 400px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 20px;
+        background-color: #fafafa;
+        position: sticky;
+        top: 20px;
+        height: fit-content;
+        max-height: calc(100vh - 40px);
+        overflow-y: auto;
+      }
+      h1 {
+        color: #333;
+        text-align: center;
+      }
+      .controls {
+        margin-bottom: 20px;
+        text-align: center;
+      }
+      button {
+        background-color: #007acc;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        margin: 5px;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #005a9e;
+      }
+      .file-list {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        min-height: 300px;
+        padding: 10px;
+      }
+      .folder-info {
+        background-color: #f0f8ff;
+        padding: 10px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+        border-left: 4px solid #007acc;
+      }
+      .file-item {
+        display: flex;
+        align-items: center;
+        padding: 8px;
+        margin: 5px 0;
+        border: 1px solid #eee;
+        border-radius: 4px;
+        background-color: #fafafa;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+      .file-item:hover {
+        background-color: #e6f3ff;
+      }
+      .file-item.selected {
+        background-color: #cce7ff;
+        border-color: #007acc;
+      }
+      .file-icon {
+        width: 20px;
+        height: 20px;
+        margin-right: 10px;
+        text-align: center;
+      }
+      .file-details {
+        flex: 1;
+      }
+      .file-name {
+        font-weight: bold;
+        color: #333;
+      }
+      .file-meta {
+        font-size: 0.8em;
+        color: #666;
+        margin-top: 2px;
+      }
+      .loading {
+        text-align: center;
+        padding: 20px;
+        color: #666;
+      }
+      .preview-content {
+        text-align: center;
+      }
+      .preview-image {
+        max-width: 100%;
+        max-height: 400px;
+        border-radius: 4px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      }
+      .preview-video {
+        width: 100%;
+        max-height: 400px;
+        border-radius: 4px;
+      }
+      .preview-audio {
+        width: 100%;
+        margin-top: 20px;
+      }
+      .preview-info {
+        margin-top: 15px;
+        padding: 10px;
+        background-color: white;
+        border-radius: 4px;
+        text-align: left;
+      }
+      .preview-placeholder {
+        padding: 40px;
+        text-align: center;
+        color: #999;
+        font-style: italic;
+      }
+      .search-filters {
+        margin-bottom: 15px;
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 4px;
+        border: 1px solid #e9ecef;
+      }
+      .search-input {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        margin-bottom: 10px;
+        font-size: 14px;
+      }
+      .filter-buttons {
+        display: flex;
+        gap: 5px;
+        flex-wrap: wrap;
+      }
+      .filter-btn {
+        padding: 6px 12px;
+        border: 1px solid #ddd;
+        background-color: white;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        transition: all 0.2s;
+      }
+      .filter-btn:hover {
+        background-color: #e6f3ff;
+      }
+      .filter-btn.active {
+        background-color: #007acc;
+        color: white;
+        border-color: #007acc;
+      }
+      .file-count {
+        font-size: 12px;
+        color: #666;
+        margin-top: 5px;
+      }
+      .sort-rating-controls {
+        margin-top: 10px;
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .sort-controls,
+      .rating-filter-controls {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .sort-controls label,
+      .rating-filter-controls label {
+        font-size: 12px;
+        font-weight: bold;
+        color: #333;
+        white-space: nowrap;
+      }
+      .sort-select,
+      .rating-filter {
+        padding: 4px 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 12px;
+        background-color: white;
+        cursor: pointer;
+        min-width: 140px;
+      }
+      .sort-select:focus,
+      .rating-filter:focus {
+        outline: none;
+        border-color: #007acc;
+        box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
+      }
+      .album-group {
+        margin-bottom: 20px;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        overflow: hidden;
+      }
+      .album-header {
+        background-color: #f8f9fa;
+        padding: 12px 15px;
+        border-bottom: 1px solid #e0e0e0;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        user-select: none;
+      }
+      .album-header:hover {
+        background-color: #e9ecef;
+      }
+      .album-title {
+        font-weight: bold;
+        color: #333;
+      }
+      .album-meta {
+        font-size: 12px;
+        color: #666;
+      }
+      .album-rating {
+        margin-top: 4px;
+      }
+      .star {
+        color: #ddd;
+        font-size: 16px;
+        cursor: pointer;
+        margin-right: 2px;
+        transition: color 0.2s;
+      }
+      .star:hover {
+        color: #ffa500;
+      }
+      .star.active {
+        color: #ffd700;
+      }
+      .album-toggle {
+        font-size: 14px;
+        color: #666;
+      }
+      .album-files {
+        padding: 10px;
+      }
+      .album-files.collapsed {
+        display: none;
+      }
+      .artist-group {
+        margin-bottom: 25px;
+        border: 2px solid #d0d7de;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .artist-header {
+        background-color: #f6f8fa;
+        padding: 15px 18px;
+        border-bottom: 2px solid #d0d7de;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        user-select: none;
+      }
+      .artist-header:hover {
+        background-color: #eef2f5;
+      }
+      .artist-title {
+        font-weight: bold;
+        font-size: 16px;
+        color: #1f2328;
+      }
+      .artist-meta {
+        font-size: 13px;
+        color: #656d76;
+      }
+      .artist-albums {
+        padding: 15px;
+        background-color: #ffffff;
+      }
+      .artist-albums.collapsed {
+        display: none;
+      }
+      .nested-album {
+        margin-bottom: 15px;
+        border: 1px solid #e1e4e8;
+        border-radius: 6px;
+        overflow: hidden;
+      }
+      .nested-album:last-child {
+        margin-bottom: 0;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <h1>Media File Organizer</h1>
-        <div class="controls">
-            <button onclick="selectFolder()">フォルダを選択</button>
-            <button onclick="refreshFiles()">更新</button>
-        </div>
-        <div class="main-content">
-            <div class="file-list-container">
-                <h3>ファイル一覧</h3>
-                <div class="search-filters" id="searchFilters" style="display: none;">
-                    <input type="text" class="search-input" id="searchInput" placeholder="ファイル名・アーティスト・アルバムで検索...">
-                    <div class="filter-buttons">
-                        <button class="filter-btn active" data-type="all">全て</button>
-                        <button class="filter-btn" data-type="image">🖼️ 画像</button>
-                        <button class="filter-btn" data-type="video">🎬 動画</button>
-                        <button class="filter-btn" data-type="audio">🎵 音声</button>
-                        <button class="filter-btn" id="artistGroupBtn" data-group="artist">🎤 アーティスト別</button>
-                    </div>
-                    <div class="sort-rating-controls">
-                        <div class="sort-controls">
-                            <label for="sortSelect">並び順:</label>
-                            <select id="sortSelect" class="sort-select">
-                                <option value="name-asc">アルバム名 (A-Z)</option>
-                                <option value="name-desc">アルバム名 (Z-A)</option>
-                                <option value="artist-asc">アーティスト名 (A-Z)</option>
-                                <option value="artist-desc">アーティスト名 (Z-A)</option>
-                                <option value="rating-desc">レーティング (高→低)</option>
-                                <option value="rating-asc">レーティング (低→高)</option>
-                                <option value="filecount-desc">ファイル数 (多→少)</option>
-                                <option value="filecount-asc">ファイル数 (少→多)</option>
-                            </select>
-                        </div>
-                        <div class="rating-filter-controls">
-                            <label for="ratingFilter">レーティングフィルター:</label>
-                            <select id="ratingFilter" class="rating-filter">
-                                <option value="all">全て表示</option>
-                                <option value="5">★★★★★ (5星)</option>
-                                <option value="4">★★★★☆ (4星以上)</option>
-                                <option value="3">★★★☆☆ (3星以上)</option>
-                                <option value="2">★★☆☆☆ (2星以上)</option>
-                                <option value="1">★☆☆☆☆ (1星以上)</option>
-                                <option value="unrated">未評価のみ</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="file-count" id="fileCount"></div>
-                </div>
-                <div class="file-list" id="fileList">
-                    <p>フォルダを選択してメディアファイルを表示します</p>
-                </div>
+      <h1>Media File Organizer</h1>
+      <div class="controls">
+        <button onclick="selectFolder()">フォルダを選択</button>
+        <button onclick="refreshFiles()">更新</button>
+      </div>
+      <div class="main-content">
+        <div class="file-list-container">
+          <h3>ファイル一覧</h3>
+          <div class="search-filters" id="searchFilters" style="display: none">
+            <input
+              type="text"
+              class="search-input"
+              id="searchInput"
+              placeholder="ファイル名・アーティスト・アルバムで検索..."
+            />
+            <div class="filter-buttons">
+              <button class="filter-btn active" data-type="all">全て</button>
+              <button class="filter-btn" data-type="image">🖼️ 画像</button>
+              <button class="filter-btn" data-type="video">🎬 動画</button>
+              <button class="filter-btn" data-type="audio">🎵 音声</button>
+              <button class="filter-btn" id="artistGroupBtn" data-group="artist">
+                🎤 アーティスト別
+              </button>
             </div>
-            <div class="preview-container">
-                <h3>プレビュー</h3>
-                <div class="preview-content" id="previewContent">
-                    <div class="preview-placeholder">
-                        ファイルを選択してプレビューを表示します
-                    </div>
-                </div>
+            <div class="sort-rating-controls">
+              <div class="sort-controls">
+                <label for="sortSelect">並び順:</label>
+                <select id="sortSelect" class="sort-select">
+                  <option value="name-asc">アルバム名 (A-Z)</option>
+                  <option value="name-desc">アルバム名 (Z-A)</option>
+                  <option value="artist-asc">アーティスト名 (A-Z)</option>
+                  <option value="artist-desc">アーティスト名 (Z-A)</option>
+                  <option value="rating-desc">レーティング (高→低)</option>
+                  <option value="rating-asc">レーティング (低→高)</option>
+                  <option value="filecount-desc">ファイル数 (多→少)</option>
+                  <option value="filecount-asc">ファイル数 (少→多)</option>
+                </select>
+              </div>
+              <div class="rating-filter-controls">
+                <label for="ratingFilter">レーティングフィルター:</label>
+                <select id="ratingFilter" class="rating-filter">
+                  <option value="all">全て表示</option>
+                  <option value="5">★★★★★ (5星)</option>
+                  <option value="4">★★★★☆ (4星以上)</option>
+                  <option value="3">★★★☆☆ (3星以上)</option>
+                  <option value="2">★★☆☆☆ (2星以上)</option>
+                  <option value="1">★☆☆☆☆ (1星以上)</option>
+                  <option value="unrated">未評価のみ</option>
+                </select>
+              </div>
             </div>
+            <div class="file-count" id="fileCount"></div>
+          </div>
+          <div class="file-list" id="fileList">
+            <p>フォルダを選択してメディアファイルを表示します</p>
+          </div>
         </div>
+        <div class="preview-container">
+          <h3>プレビュー</h3>
+          <div class="preview-content" id="previewContent">
+            <div class="preview-placeholder">ファイルを選択してプレビューを表示します</div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <script>
-        const { ipcRenderer } = require('electron');
-        
-        let currentFolder = null;
-        let allFiles = [];
-        let currentFilter = 'all';
-        let currentSearch = '';
-        let groupByArtist = false;
-        let groupByAlbum = false;
-        let currentSort = 'name-asc';
-        let currentRatingFilter = 'all';
-        
-        async function selectFolder() {
-            const fileList = document.getElementById('fileList');
+      const { ipcRenderer } = require('electron');
+
+      let currentFolder = null;
+      let allFiles = [];
+      let currentFilter = 'all';
+      let currentSearch = '';
+      let groupByArtist = false;
+      let groupByAlbum = false;
+      let currentSort = 'name-asc';
+      let currentRatingFilter = 'all';
+
+      async function selectFolder() {
+        const fileList = document.getElementById('fileList');
+        fileList.innerHTML = '';
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'loading';
+        loadingDiv.appendChild(document.createTextNode('フォルダを読み込み中...'));
+        loadingDiv.appendChild(document.createElement('br'));
+        const smallText = document.createElement('small');
+        smallText.textContent = 'サブフォルダも含めて検索しています';
+        loadingDiv.appendChild(smallText);
+        fileList.appendChild(loadingDiv);
+
+        try {
+          const result = await ipcRenderer.invoke('select-folder');
+          if (result) {
+            currentFolder = result;
+            allFiles = result.files;
+            setupFilters();
+            displayFilteredFiles();
+          } else {
             fileList.innerHTML = '';
-            const loadingDiv = document.createElement('div');
-            loadingDiv.className = 'loading';
-            loadingDiv.appendChild(document.createTextNode('フォルダを読み込み中...'));
-            loadingDiv.appendChild(document.createElement('br'));
-            const smallText = document.createElement('small');
-            smallText.textContent = 'サブフォルダも含めて検索しています';
-            loadingDiv.appendChild(smallText);
-            fileList.appendChild(loadingDiv);
-            
-            try {
-                const result = await ipcRenderer.invoke('select-folder');
-                if (result) {
-                    currentFolder = result;
-                    allFiles = result.files;
-                    setupFilters();
-                    displayFilteredFiles();
-                } else {
-                    fileList.innerHTML = '';
-                    const message = document.createElement('p');
-                    message.textContent = 'フォルダが選択されませんでした';
-                    fileList.appendChild(message);
-                }
-            } catch (error) {
-                console.error('=== FOLDER SELECTION ERROR ===');
-                console.error('Error message:', error.message);
-                console.error('Error stack:', error.stack);
-                console.error('Error type:', error.constructor.name);
-                console.error('Application state:', {
-                    groupByArtist: groupByArtist,
-                    currentFilter: currentFilter,
-                    allFilesCount: allFiles?.length || 0,
-                    currentFolderPath: currentFolder?.folder || 'none'
-                });
-                console.error('================================');
-                
-                fileList.innerHTML = '';
-                const message = document.createElement('p');
-                message.textContent = `エラーが発生しました: ${error.message || 'Unknown error'}`;
-                fileList.appendChild(message);
-            }
+            const message = document.createElement('p');
+            message.textContent = 'フォルダが選択されませんでした';
+            fileList.appendChild(message);
+          }
+        } catch (error) {
+          console.error('=== FOLDER SELECTION ERROR ===');
+          console.error('Error message:', error.message);
+          console.error('Error stack:', error.stack);
+          console.error('Error type:', error.constructor.name);
+          console.error('Application state:', {
+            groupByArtist: groupByArtist,
+            currentFilter: currentFilter,
+            allFilesCount: allFiles?.length || 0,
+            currentFolderPath: currentFolder?.folder || 'none'
+          });
+          console.error('================================');
+
+          fileList.innerHTML = '';
+          const message = document.createElement('p');
+          message.textContent = `エラーが発生しました: ${error.message || 'Unknown error'}`;
+          fileList.appendChild(message);
+        }
+      }
+
+      function displayFiles(data) {
+        const fileList = document.getElementById('fileList');
+
+        // Clear existing content
+        fileList.innerHTML = '';
+
+        if (!data || !data.files || data.files.length === 0) {
+          const message = document.createElement('p');
+          message.textContent = 'メディアファイルが見つかりませんでした';
+          fileList.appendChild(message);
+          return;
         }
 
-        function displayFiles(data) {
-            const fileList = document.getElementById('fileList');
-            
-            // Clear existing content
-            fileList.innerHTML = '';
-            
-            if (!data || !data.files || data.files.length === 0) {
-                const message = document.createElement('p');
-                message.textContent = 'メディアファイルが見つかりませんでした';
-                fileList.appendChild(message);
-                return;
-            }
-            
-            // Create folder info section
-            const folderInfo = document.createElement('div');
-            folderInfo.className = 'folder-info';
-            
-            const folderPath = document.createElement('div');
-            const folderLabel = document.createElement('strong');
-            folderLabel.textContent = '選択されたフォルダ:';
-            folderPath.appendChild(folderLabel);
-            folderPath.appendChild(document.createTextNode(' ' + data.folder));
-            
-            const fileCount = document.createElement('div');
-            const countLabel = document.createElement('strong');
-            countLabel.textContent = 'メディアファイル数:';
-            fileCount.appendChild(countLabel);
-            fileCount.appendChild(document.createTextNode(` ${data.files.length}件`));
-            
-            folderInfo.appendChild(folderPath);
-            folderInfo.appendChild(fileCount);
-            fileList.appendChild(folderInfo);
-            
-            // Create file items
-            data.files.forEach(file => {
-                const icon = getFileIcon(file.type);
-                const sizeStr = formatFileSize(file.size);
-                const dateStr = new Date(file.modified).toLocaleDateString('ja-JP');
-                
-                // Create file item container
-                const fileItem = document.createElement('div');
-                fileItem.className = 'file-item';
-                fileItem.dataset.path = file.path;
-                
-                // Add click event listener
-                fileItem.addEventListener('click', () => {
-                    previewFile(file.path, file.type, file.name, file.size);
-                });
-                
-                // Create icon element
-                const iconDiv = document.createElement('div');
-                iconDiv.className = 'file-icon';
-                iconDiv.textContent = icon;
-                
-                // Create details container
-                const detailsDiv = document.createElement('div');
-                detailsDiv.className = 'file-details';
-                
-                // Create file name element
-                const fileName = document.createElement('div');
-                fileName.className = 'file-name';
-                fileName.textContent = file.name;
-                
-                // Create file meta element
-                const fileMeta = document.createElement('div');
-                fileMeta.className = 'file-meta';
-                
-                // Add folder path if file is in subdirectory
-                const pathInfo = file.relativePath ? ` (${file.relativePath}/)` : '';
-                fileMeta.textContent = `${file.type} • ${sizeStr} • ${dateStr}${pathInfo}`;
-                
-                // Assemble the structure
-                detailsDiv.appendChild(fileName);
-                detailsDiv.appendChild(fileMeta);
-                fileItem.appendChild(iconDiv);
-                fileItem.appendChild(detailsDiv);
-                fileList.appendChild(fileItem);
-            });
+        // Create folder info section
+        const folderInfo = document.createElement('div');
+        folderInfo.className = 'folder-info';
+
+        const folderPath = document.createElement('div');
+        const folderLabel = document.createElement('strong');
+        folderLabel.textContent = '選択されたフォルダ:';
+        folderPath.appendChild(folderLabel);
+        folderPath.appendChild(document.createTextNode(' ' + data.folder));
+
+        const fileCount = document.createElement('div');
+        const countLabel = document.createElement('strong');
+        countLabel.textContent = 'メディアファイル数:';
+        fileCount.appendChild(countLabel);
+        fileCount.appendChild(document.createTextNode(` ${data.files.length}件`));
+
+        folderInfo.appendChild(folderPath);
+        folderInfo.appendChild(fileCount);
+        fileList.appendChild(folderInfo);
+
+        // Create file items
+        data.files.forEach(file => {
+          const icon = getFileIcon(file.type);
+          const sizeStr = formatFileSize(file.size);
+          const dateStr = new Date(file.modified).toLocaleDateString('ja-JP');
+
+          // Create file item container
+          const fileItem = document.createElement('div');
+          fileItem.className = 'file-item';
+          fileItem.dataset.path = file.path;
+
+          // Add click event listener
+          fileItem.addEventListener('click', () => {
+            previewFile(file.path, file.type, file.name, file.size);
+          });
+
+          // Create icon element
+          const iconDiv = document.createElement('div');
+          iconDiv.className = 'file-icon';
+          iconDiv.textContent = icon;
+
+          // Create details container
+          const detailsDiv = document.createElement('div');
+          detailsDiv.className = 'file-details';
+
+          // Create file name element
+          const fileName = document.createElement('div');
+          fileName.className = 'file-name';
+          fileName.textContent = file.name;
+
+          // Create file meta element
+          const fileMeta = document.createElement('div');
+          fileMeta.className = 'file-meta';
+
+          // Add folder path if file is in subdirectory
+          const pathInfo = file.relativePath ? ` (${file.relativePath}/)` : '';
+          fileMeta.textContent = `${file.type} • ${sizeStr} • ${dateStr}${pathInfo}`;
+
+          // Assemble the structure
+          detailsDiv.appendChild(fileName);
+          detailsDiv.appendChild(fileMeta);
+          fileItem.appendChild(iconDiv);
+          fileItem.appendChild(detailsDiv);
+          fileList.appendChild(fileItem);
+        });
+      }
+
+      function getFileIcon(type) {
+        switch (type) {
+          case 'image':
+            return '🖼️';
+          case 'video':
+            return '🎬';
+          case 'audio':
+            return '🎵';
+          default:
+            return '📄';
         }
-        
-        function getFileIcon(type) {
-            switch(type) {
-                case 'image': return '🖼️';
-                case 'video': return '🎬';
-                case 'audio': return '🎵';
-                default: return '📄';
-            }
+      }
+
+      function formatFileSize(bytes) {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+      }
+
+      function refreshFiles() {
+        if (currentFolder) {
+          displayFilteredFiles();
+        } else {
+          const fileList = document.getElementById('fileList');
+          fileList.innerHTML = '';
+          const message = document.createElement('p');
+          message.textContent = 'まずフォルダを選択してください';
+          fileList.appendChild(message);
         }
-        
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 B';
-            const k = 1024;
-            const sizes = ['B', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
+      }
 
-        function refreshFiles() {
-            if (currentFolder) {
-                displayFilteredFiles();
-            } else {
-                const fileList = document.getElementById('fileList');
-                fileList.innerHTML = '';
-                const message = document.createElement('p');
-                message.textContent = 'まずフォルダを選択してください';
-                fileList.appendChild(message);
-            }
-        }
-        
-        function setupFilters() {
-            const searchFilters = document.getElementById('searchFilters');
-            const searchInput = document.getElementById('searchInput');
-            const filterButtons = document.querySelectorAll('.filter-btn');
-            const sortSelect = document.getElementById('sortSelect');
-            const ratingFilter = document.getElementById('ratingFilter');
-            
-            // Show filters
-            searchFilters.style.display = 'block';
-            
-            // Setup search input
-            searchInput.addEventListener('input', (e) => {
-                currentSearch = e.target.value.toLowerCase();
-                displayFilteredFiles();
-            });
-            
-            // Setup sort select
-            sortSelect.addEventListener('change', (e) => {
-                currentSort = e.target.value;
-                displayFilteredFiles();
-            });
-            
-            // Setup rating filter
-            ratingFilter.addEventListener('change', (e) => {
-                currentRatingFilter = e.target.value;
-                displayFilteredFiles();
-            });
-            
-            // Setup filter buttons
-            filterButtons.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    if (btn.dataset.group === 'artist') {
-                        // Toggle artist grouping
-                        groupByArtist = !groupByArtist;
-                        btn.classList.toggle('active');
-                        
-                        // Reset filters when grouping by artist
-                        if (groupByArtist) {
-                            filterButtons.forEach(b => {
-                                if (b.dataset.type) b.classList.remove('active');
-                            });
-                            document.querySelector('[data-type="all"]').classList.add('active');
-                            currentFilter = 'all';
-                        }
-                    } else {
-                        // Regular filter buttons
-                        if (groupByArtist) {
-                            groupByArtist = false;
-                            document.getElementById('artistGroupBtn').classList.remove('active');
-                        }
-                        filterButtons.forEach(b => {
-                            if (b.dataset.type) b.classList.remove('active');
-                        });
-                        btn.classList.add('active');
-                        currentFilter = btn.dataset.type;
-                    }
-                    displayFilteredFiles();
-                });
-            });
-        }
-        
-        // Helper function to get album rating
-        function getAlbumRating(artistName, albumName) {
-            const albumKey = `${artistName}/${albumName}`;
-            return loadRating(albumKey);
-        }
+      function setupFilters() {
+        const searchFilters = document.getElementById('searchFilters');
+        const searchInput = document.getElementById('searchInput');
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        const sortSelect = document.getElementById('sortSelect');
+        const ratingFilter = document.getElementById('ratingFilter');
 
-        // Helper function to filter albums by rating
-        function filterAlbumsByRating(albumGroups) {
-            if (currentRatingFilter === 'all') {
-                return albumGroups;
-            }
+        // Show filters
+        searchFilters.style.display = 'block';
 
-            const filtered = {};
-            Object.keys(albumGroups).forEach(artistName => {
-                const artistAlbums = albumGroups[artistName];
-                const filteredAlbums = {};
-                
-                Object.keys(artistAlbums).forEach(albumName => {
-                    const rating = getAlbumRating(artistName, albumName);
-                    let includeAlbum = false;
-
-                    if (currentRatingFilter === 'unrated') {
-                        includeAlbum = rating === 0;
-                    } else {
-                        const minRating = parseInt(currentRatingFilter);
-                        if (currentRatingFilter === '5') {
-                            includeAlbum = rating === 5;
-                        } else {
-                            includeAlbum = rating >= minRating;
-                        }
-                    }
-
-                    if (includeAlbum) {
-                        filteredAlbums[albumName] = artistAlbums[albumName];
-                    }
-                });
-
-                if (Object.keys(filteredAlbums).length > 0) {
-                    filtered[artistName] = filteredAlbums;
-                }
-            });
-
-            return filtered;
-        }
-
-        // Helper function to sort albums
-        function sortAlbums(albumGroups) {
-            const sorted = {};
-            
-            Object.keys(albumGroups).forEach(artistName => {
-                const artistAlbums = albumGroups[artistName];
-                const albumEntries = Object.entries(artistAlbums);
-                
-                albumEntries.sort((a, b) => {
-                    const [albumNameA, filesA] = a;
-                    const [albumNameB, filesB] = b;
-                    const ratingA = getAlbumRating(artistName, albumNameA);
-                    const ratingB = getAlbumRating(artistName, albumNameB);
-
-                    switch (currentSort) {
-                        case 'name-asc':
-                            return albumNameA.localeCompare(albumNameB);
-                        case 'name-desc':
-                            return albumNameB.localeCompare(albumNameA);
-                        case 'rating-desc':
-                            if (ratingB !== ratingA) return ratingB - ratingA;
-                            return albumNameA.localeCompare(albumNameB);
-                        case 'rating-asc':
-                            if (ratingA !== ratingB) return ratingA - ratingB;
-                            return albumNameA.localeCompare(albumNameB);
-                        case 'filecount-desc':
-                            if (filesB.length !== filesA.length) return filesB.length - filesA.length;
-                            return albumNameA.localeCompare(albumNameB);
-                        case 'filecount-asc':
-                            if (filesA.length !== filesB.length) return filesA.length - filesB.length;
-                            return albumNameA.localeCompare(albumNameB);
-                        default:
-                            return albumNameA.localeCompare(albumNameB);
-                    }
-                });
-
-                sorted[artistName] = Object.fromEntries(albumEntries);
-            });
-
-            // Sort artists
-            const artistEntries = Object.entries(sorted);
-            artistEntries.sort((a, b) => {
-                const [artistNameA] = a;
-                const [artistNameB] = b;
-
-                switch (currentSort) {
-                    case 'artist-asc':
-                        return artistNameA.localeCompare(artistNameB);
-                    case 'artist-desc':
-                        return artistNameB.localeCompare(artistNameA);
-                    default:
-                        return artistNameA.localeCompare(artistNameB);
-                }
-            });
-
-            return Object.fromEntries(artistEntries);
-        }
-
-        function displayFilteredFiles() {
-            if (!allFiles || allFiles.length === 0) {
-                displayFiles({ folder: currentFolder?.folder || '', files: [] });
-                return;
-            }
-            
-            // Apply filters
-            let filteredFiles = allFiles.filter(file => {
-                // Type filter
-                if (currentFilter !== 'all' && file.type !== currentFilter) {
-                    return false;
-                }
-                
-                // Search filter - search in filename, artist, and album
-                if (currentSearch) {
-                    const searchTerm = currentSearch.toLowerCase();
-                    const matchesName = file.name.toLowerCase().includes(searchTerm);
-                    const matchesArtist = file.artist && file.artist.toLowerCase().includes(searchTerm);
-                    const matchesAlbum = file.album && file.album.toLowerCase().includes(searchTerm);
-                    
-                    if (!matchesName && !matchesArtist && !matchesAlbum) {
-                        return false;
-                    }
-                }
-                
-                return true;
-            });
-            
-            // Update file count
-            const fileCount = document.getElementById('fileCount');
-            fileCount.textContent = `${filteredFiles.length}件 / ${allFiles.length}件`;
-            
-            // Display files (grouped or normal)
-            if (groupByArtist) {
-                displayArtistGroups(filteredFiles);
-            } else {
-                displayFiles({
-                    folder: currentFolder.folder,
-                    files: filteredFiles
-                });
-            }
-        }
-        
-        function displayAlbumGroups(files) {
-            const fileList = document.getElementById('fileList');
-            fileList.innerHTML = '';
-            
-            // Group files by album
-            const albumGroups = {};
-            files.forEach(file => {
-                const album = file.album || 'アルバム名なし';
-                if (!albumGroups[album]) {
-                    albumGroups[album] = [];
-                }
-                albumGroups[album].push(file);
-            });
-            
-            // Create album groups
-            Object.keys(albumGroups).sort().forEach(albumName => {
-                const albumFiles = albumGroups[albumName];
-                const albumGroup = document.createElement('div');
-                albumGroup.className = 'album-group';
-                
-                // Create album header
-                const albumHeader = document.createElement('div');
-                albumHeader.className = 'album-header';
-                albumHeader.addEventListener('click', () => {
-                    const albumFilesDiv = albumGroup.querySelector('.album-files');
-                    const toggle = albumGroup.querySelector('.album-toggle');
-                    albumFilesDiv.classList.toggle('collapsed');
-                    toggle.textContent = albumFilesDiv.classList.contains('collapsed') ? '▶' : '▼';
-                });
-                
-                const albumInfo = document.createElement('div');
-                const albumTitle = document.createElement('div');
-                albumTitle.className = 'album-title';
-                albumTitle.textContent = albumName;
-                
-                const albumMeta = document.createElement('div');
-                albumMeta.className = 'album-meta';
-                const audioCount = albumFiles.filter(f => f.type === 'audio').length;
-                const imageCount = albumFiles.filter(f => f.type === 'image').length;
-                const videoCount = albumFiles.filter(f => f.type === 'video').length;
-                let metaText = `${albumFiles.length}件`;
-                if (audioCount > 0) metaText += ` (🎵${audioCount}`;
-                if (imageCount > 0) metaText += ` 🖼️${imageCount}`;
-                if (videoCount > 0) metaText += ` 🎬${videoCount}`;
-                if (audioCount > 0 || imageCount > 0 || videoCount > 0) metaText += ')';
-                albumMeta.textContent = metaText;
-                
-                albumInfo.appendChild(albumTitle);
-                albumInfo.appendChild(albumMeta);
-                
-                // Add star rating UI
-                const albumRating = document.createElement('div');
-                albumRating.className = 'album-rating';
-                
-                for (let i = 1; i <= 5; i++) {
-                    const star = document.createElement('span');
-                    star.className = 'star';
-                    star.textContent = '★';
-                    star.dataset.rating = i;
-                    star.dataset.albumKey = `${artistName}/${albumName}`;
-                    
-                    // Add click handler for star rating
-                    star.addEventListener('click', async (e) => {
-                        e.stopPropagation();
-                        const rating = parseInt(e.target.dataset.rating);
-                        const albumKey = e.target.dataset.albumKey;
-                        
-                        // Update visual state
-                        const stars = albumRating.querySelectorAll('.star');
-                        stars.forEach((s, index) => {
-                            if (index < rating) {
-                                s.classList.add('active');
-                            } else {
-                                s.classList.remove('active');
-                            }
-                        });
-                        
-                        // Save rating
-                        saveRating(albumKey, rating);
-                    });
-                    
-                    albumRating.appendChild(star);
-                }
-                
-                albumInfo.appendChild(albumRating);
-                
-                // Load and display saved rating
-                const savedRating = loadRating(`${artistName}/${albumName}`);
-                if (savedRating > 0) {
-                    const stars = albumRating.querySelectorAll('.star');
-                    stars.forEach((s, index) => {
-                        if (index < savedRating) {
-                            s.classList.add('active');
-                        }
-                    });
-                }
-                
-                const albumToggle = document.createElement('div');
-                albumToggle.className = 'album-toggle';
-                albumToggle.textContent = '▼';
-                
-                albumHeader.appendChild(albumInfo);
-                albumHeader.appendChild(albumToggle);
-                
-                // Create album files container
-                const albumFilesDiv = document.createElement('div');
-                albumFilesDiv.className = 'album-files';
-                
-                // Add files to album
-                albumFiles.forEach(file => {
-                    const fileItem = createFileItem(file);
-                    albumFilesDiv.appendChild(fileItem);
-                });
-                
-                albumGroup.appendChild(albumHeader);
-                albumGroup.appendChild(albumFilesDiv);
-                fileList.appendChild(albumGroup);
-            });
-        }
-        
-        function displayArtistGroups(files) {
-            const fileList = document.getElementById('fileList');
-            fileList.innerHTML = '';
-            
-            // Group files by artist, then by album
-            let artistGroups = {};
-            files.forEach(file => {
-                const artist = file.artist || 'アーティスト名なし';
-                const album = file.album || 'アルバム名なし';
-                
-                if (!artistGroups[artist]) {
-                    artistGroups[artist] = {};
-                }
-                if (!artistGroups[artist][album]) {
-                    artistGroups[artist][album] = [];
-                }
-                artistGroups[artist][album].push(file);
-            });
-            
-            // Apply rating filter
-            artistGroups = filterAlbumsByRating(artistGroups);
-            
-            // Apply sorting
-            artistGroups = sortAlbums(artistGroups);
-            
-            // Create artist groups
-            Object.keys(artistGroups).forEach(artistName => {
-                const artistAlbums = artistGroups[artistName];
-                const artistGroup = document.createElement('div');
-                artistGroup.className = 'artist-group';
-                
-                // Create artist header
-                const artistHeader = document.createElement('div');
-                artistHeader.className = 'artist-header';
-                artistHeader.addEventListener('click', () => {
-                    const artistAlbumsDiv = artistGroup.querySelector('.artist-albums');
-                    const toggle = artistGroup.querySelector('.album-toggle');
-                    artistAlbumsDiv.classList.toggle('collapsed');
-                    toggle.textContent = artistAlbumsDiv.classList.contains('collapsed') ? '▶' : '▼';
-                });
-                
-                const artistInfo = document.createElement('div');
-                const artistTitle = document.createElement('div');
-                artistTitle.className = 'artist-title';
-                artistTitle.textContent = `📀 ${artistName}`;
-                
-                const artistMeta = document.createElement('div');
-                artistMeta.className = 'artist-meta';
-                const albumCount = Object.keys(artistAlbums).length;
-                const totalFiles = Object.values(artistAlbums).flat().length;
-                const audioCount = Object.values(artistAlbums).flat().filter(f => f.type === 'audio').length;
-                const imageCount = Object.values(artistAlbums).flat().filter(f => f.type === 'image').length;
-                const videoCount = Object.values(artistAlbums).flat().filter(f => f.type === 'video').length;
-                
-                let metaText = `${albumCount}アルバム, ${totalFiles}件`;
-                if (audioCount > 0) metaText += ` (🎵${audioCount}`;
-                if (imageCount > 0) metaText += ` 🖼️${imageCount}`;
-                if (videoCount > 0) metaText += ` 🎬${videoCount}`;
-                if (audioCount > 0 || imageCount > 0 || videoCount > 0) metaText += ')';
-                artistMeta.textContent = metaText;
-                
-                artistInfo.appendChild(artistTitle);
-                artistInfo.appendChild(artistMeta);
-                
-                const artistToggle = document.createElement('div');
-                artistToggle.className = 'album-toggle';
-                artistToggle.textContent = '▼';
-                
-                artistHeader.appendChild(artistInfo);
-                artistHeader.appendChild(artistToggle);
-                
-                // Create artist albums container
-                const artistAlbumsDiv = document.createElement('div');
-                artistAlbumsDiv.className = 'artist-albums';
-                
-                // Add albums to artist
-                Object.keys(artistAlbums).sort().forEach(albumName => {
-                    const albumFiles = artistAlbums[albumName];
-                    const nestedAlbum = document.createElement('div');
-                    nestedAlbum.className = 'nested-album';
-                    
-                    // Create album header
-                    const albumHeader = document.createElement('div');
-                    albumHeader.className = 'album-header';
-                    albumHeader.addEventListener('click', () => {
-                        const albumFilesDiv = nestedAlbum.querySelector('.album-files');
-                        const toggle = nestedAlbum.querySelector('.album-toggle');
-                        albumFilesDiv.classList.toggle('collapsed');
-                        toggle.textContent = albumFilesDiv.classList.contains('collapsed') ? '▶' : '▼';
-                    });
-                    
-                    const albumInfo = document.createElement('div');
-                    const albumTitle = document.createElement('div');
-                    albumTitle.className = 'album-title';
-                    albumTitle.textContent = `📁 ${albumName}`;
-                    
-                    const albumMeta = document.createElement('div');
-                    albumMeta.className = 'album-meta';
-                    const albumAudioCount = albumFiles.filter(f => f.type === 'audio').length;
-                    const albumImageCount = albumFiles.filter(f => f.type === 'image').length;
-                    const albumVideoCount = albumFiles.filter(f => f.type === 'video').length;
-                    let albumMetaText = `${albumFiles.length}件`;
-                    if (albumAudioCount > 0) albumMetaText += ` (🎵${albumAudioCount}`;
-                    if (albumImageCount > 0) albumMetaText += ` 🖼️${albumImageCount}`;
-                    if (albumVideoCount > 0) albumMetaText += ` 🎬${albumVideoCount}`;
-                    if (albumAudioCount > 0 || albumImageCount > 0 || albumVideoCount > 0) albumMetaText += ')';
-                    albumMeta.textContent = albumMetaText;
-                    
-                    albumInfo.appendChild(albumTitle);
-                    albumInfo.appendChild(albumMeta);
-                    
-                    // Add star rating UI
-                    const albumRating = document.createElement('div');
-                    albumRating.className = 'album-rating';
-                    
-                    for (let i = 1; i <= 5; i++) {
-                        const star = document.createElement('span');
-                        star.className = 'star';
-                        star.textContent = '★';
-                        star.dataset.rating = i;
-                        star.dataset.albumKey = `${artistName}/${albumName}`;
-                        
-                        // Add click handler for star rating
-                        star.addEventListener('click', async (e) => {
-                            e.stopPropagation();
-                            const rating = parseInt(e.target.dataset.rating);
-                            const albumKey = e.target.dataset.albumKey;
-                            
-                            // Update visual state
-                            const stars = albumRating.querySelectorAll('.star');
-                            stars.forEach((s, index) => {
-                                if (index < rating) {
-                                    s.classList.add('active');
-                                } else {
-                                    s.classList.remove('active');
-                                }
-                            });
-                            
-                            // Save rating
-                            saveRating(albumKey, rating);
-                        });
-                        
-                        albumRating.appendChild(star);
-                    }
-                    
-                    albumInfo.appendChild(albumRating);
-                    
-                    // Load and display saved rating
-                    const savedRating = loadRating(`${artistName}/${albumName}`);
-                    if (savedRating > 0) {
-                        const stars = albumRating.querySelectorAll('.star');
-                        stars.forEach((s, index) => {
-                            if (index < savedRating) {
-                                s.classList.add('active');
-                            }
-                        });
-                    }
-                    
-                    const albumToggle = document.createElement('div');
-                    albumToggle.className = 'album-toggle';
-                    albumToggle.textContent = '▶';
-                    
-                    albumHeader.appendChild(albumInfo);
-                    albumHeader.appendChild(albumToggle);
-                    
-                    // Create album files container (collapsed by default)
-                    const albumFilesDiv = document.createElement('div');
-                    albumFilesDiv.className = 'album-files collapsed';
-                    
-                    // Add files to album
-                    albumFiles.forEach(file => {
-                        const fileItem = createFileItem(file);
-                        albumFilesDiv.appendChild(fileItem);
-                    });
-                    
-                    nestedAlbum.appendChild(albumHeader);
-                    nestedAlbum.appendChild(albumFilesDiv);
-                    artistAlbumsDiv.appendChild(nestedAlbum);
-                });
-                
-                artistGroup.appendChild(artistHeader);
-                artistGroup.appendChild(artistAlbumsDiv);
-                fileList.appendChild(artistGroup);
-            });
-        }
-        
-        function createFileItem(file) {
-            const icon = getFileIcon(file.type);
-            const sizeStr = formatFileSize(file.size);
-            const dateStr = new Date(file.modified).toLocaleDateString('ja-JP');
-            
-            // Create file item container
-            const fileItem = document.createElement('div');
-            fileItem.className = 'file-item';
-            fileItem.dataset.path = file.path;
-            
-            // Add click event listener
-            fileItem.addEventListener('click', () => {
-                previewFile(file.path, file.type, file.name, file.size);
-            });
-            
-            // Create icon element
-            const iconDiv = document.createElement('div');
-            iconDiv.className = 'file-icon';
-            iconDiv.textContent = icon;
-            
-            // Create details container
-            const detailsDiv = document.createElement('div');
-            detailsDiv.className = 'file-details';
-            
-            // Create file name element (show title if available)
-            const fileName = document.createElement('div');
-            fileName.className = 'file-name';
-            fileName.textContent = file.title || file.name;
-            
-            // Create file meta element
-            const fileMeta = document.createElement('div');
-            fileMeta.className = 'file-meta';
-            
-            // Add artist info for audio files
-            let metaText = `${file.type} • ${sizeStr} • ${dateStr}`;
-            if (file.artist && file.type === 'audio') {
-                metaText = `${file.artist} • ${metaText}`;
-            }
-            if (file.relativePath) {
-                metaText += ` (${file.relativePath}/)`;
-            }
-            fileMeta.textContent = metaText;
-            
-            // Assemble the structure
-            detailsDiv.appendChild(fileName);
-            detailsDiv.appendChild(fileMeta);
-            fileItem.appendChild(iconDiv);
-            fileItem.appendChild(detailsDiv);
-            
-            return fileItem;
-        }
-        
-        async function previewFile(filePath, fileType, fileName, fileSize) {
-            // Remove previous selection
-            document.querySelectorAll('.file-item').forEach(item => {
-                item.classList.remove('selected');
-            });
-            
-            // Add selection to clicked item
-            event.target.closest('.file-item').classList.add('selected');
-            
-            const previewContent = document.getElementById('previewContent');
-            const sizeStr = formatFileSize(fileSize);
-            
-            // Show loading state
-            previewContent.innerHTML = '';
-            const loadingDiv = document.createElement('div');
-            loadingDiv.className = 'loading';
-            const loadingText = document.createElement('p');
-            loadingText.textContent = 'ファイルを読み込み中...';
-            loadingDiv.appendChild(loadingText);
-            previewContent.appendChild(loadingDiv);
-            
-            try {
-                const dataUrl = await ipcRenderer.invoke('get-file-url', filePath);
-                
-                if (!dataUrl) {
-                    throw new Error('ファイルの読み込みに失敗しました');
-                }
-                
-                
-                // Create preview content container
-                previewContent.innerHTML = '';
-                const previewDiv = document.createElement('div');
-                previewDiv.className = 'preview-content';
-                
-                // Create media element
-                let mediaEl;
-                switch(fileType) {
-                    case 'image':
-                        mediaEl = document.createElement('img');
-                        mediaEl.src = dataUrl;
-                        mediaEl.className = 'preview-image';
-                        mediaEl.alt = fileName;
-                        mediaEl.style.opacity = '0';
-                        mediaEl.style.transition = 'opacity 0.3s';
-                        mediaEl.onload = () => mediaEl.style.opacity = '1';
-                        break;
-                    case 'video':
-                        mediaEl = document.createElement('video');
-                        mediaEl.className = 'preview-video';
-                        mediaEl.controls = true;
-                        mediaEl.preload = 'metadata';
-                        const videoSource = document.createElement('source');
-                        videoSource.src = dataUrl;
-                        mediaEl.appendChild(videoSource);
-                        const videoFallback = document.createElement('p');
-                        videoFallback.textContent = 'このブラウザは動画の再生をサポートしていません。';
-                        mediaEl.appendChild(videoFallback);
-                        break;
-                    case 'audio':
-                        const audioContainer = document.createElement('div');
-                        audioContainer.style.textAlign = 'center';
-                        audioContainer.style.margin = '40px 0';
-                        const audioIcon = document.createElement('div');
-                        audioIcon.style.fontSize = '48px';
-                        audioIcon.style.marginBottom = '20px';
-                        audioIcon.textContent = '🎵';
-                        const audioEl = document.createElement('audio');
-                        audioEl.className = 'preview-audio';
-                        audioEl.controls = true;
-                        audioEl.preload = 'metadata';
-                        const audioSource = document.createElement('source');
-                        audioSource.src = dataUrl;
-                        audioEl.appendChild(audioSource);
-                        const audioFallback = document.createElement('p');
-                        audioFallback.textContent = 'このブラウザは音声の再生をサポートしていません。';
-                        audioEl.appendChild(audioFallback);
-                        audioContainer.appendChild(audioIcon);
-                        audioContainer.appendChild(audioEl);
-                        mediaEl = audioContainer;
-                        break;
-                    default:
-                        const placeholder = document.createElement('div');
-                        placeholder.className = 'preview-placeholder';
-                        const placeholderIcon = document.createElement('div');
-                        placeholderIcon.style.fontSize = '48px';
-                        placeholderIcon.style.marginBottom = '20px';
-                        placeholderIcon.textContent = '📄';
-                        const placeholderText = document.createElement('p');
-                        placeholderText.textContent = 'このファイル形式はプレビューできません';
-                        placeholder.appendChild(placeholderIcon);
-                        placeholder.appendChild(placeholderText);
-                        mediaEl = placeholder;
-                }
-                
-                // Create info section
-                const infoDiv = document.createElement('div');
-                infoDiv.className = 'preview-info';
-                
-                const fileNameInfo = document.createElement('div');
-                const fileNameLabel = document.createElement('strong');
-                fileNameLabel.textContent = 'ファイル名:';
-                fileNameInfo.appendChild(fileNameLabel);
-                fileNameInfo.appendChild(document.createTextNode(' ' + fileName));
-                
-                const fileSizeInfo = document.createElement('div');
-                const fileSizeLabel = document.createElement('strong');
-                fileSizeLabel.textContent = 'ファイルサイズ:';
-                fileSizeInfo.appendChild(fileSizeLabel);
-                fileSizeInfo.appendChild(document.createTextNode(' ' + sizeStr));
-                
-                const fileTypeInfo = document.createElement('div');
-                const fileTypeLabel = document.createElement('strong');
-                fileTypeLabel.textContent = 'ファイル形式:';
-                fileTypeInfo.appendChild(fileTypeLabel);
-                fileTypeInfo.appendChild(document.createTextNode(' ' + fileType));
-                
-                const filePathInfo = document.createElement('div');
-                const filePathLabel = document.createElement('strong');
-                filePathLabel.textContent = 'パス:';
-                filePathInfo.appendChild(filePathLabel);
-                filePathInfo.appendChild(document.createTextNode(' ' + filePath));
-                
-                infoDiv.appendChild(fileNameInfo);
-                infoDiv.appendChild(fileSizeInfo);
-                infoDiv.appendChild(fileTypeInfo);
-                infoDiv.appendChild(filePathInfo);
-                
-                previewDiv.appendChild(mediaEl);
-                previewDiv.appendChild(infoDiv);
-                previewContent.appendChild(previewDiv);
-            } catch (error) {
-                console.error('=== FILE PREVIEW ERROR ===');
-                console.error('Error message:', error.message);
-                console.error('Error stack:', error.stack);
-                console.error('File details:', {
-                    fileName: fileName,
-                    filePath: filePath,
-                    fileType: fileType,
-                    fileSize: fileSize
-                });
-                console.error('==========================');
-                previewContent.innerHTML = '';
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'preview-placeholder';
-                
-                const errorIcon = document.createElement('div');
-                errorIcon.style.fontSize = '48px';
-                errorIcon.style.marginBottom = '20px';
-                errorIcon.textContent = '❌';
-                
-                const errorText = document.createElement('p');
-                errorText.textContent = 'ファイルの読み込みに失敗しました';
-                
-                const errorDetails = document.createElement('p');
-                errorDetails.style.fontSize = '0.8em';
-                errorDetails.style.color = '#666';
-                errorDetails.textContent = error.message;
-                
-                errorDiv.appendChild(errorIcon);
-                errorDiv.appendChild(errorText);
-                errorDiv.appendChild(errorDetails);
-                previewContent.appendChild(errorDiv);
-            }
-        }
-
-        // Global error handlers for better debugging
-        window.addEventListener('error', (event) => {
-            console.error('=== GLOBAL JAVASCRIPT ERROR ===');
-            console.error('Error message:', event.message);
-            console.error('Source file:', event.filename);
-            console.error('Line number:', event.lineno);
-            console.error('Column number:', event.colno);
-            console.error('Error object:', event.error);
-            console.error('==============================');
+        // Setup search input
+        searchInput.addEventListener('input', e => {
+          currentSearch = e.target.value.toLowerCase();
+          displayFilteredFiles();
         });
 
-        window.addEventListener('unhandledrejection', (event) => {
-            console.error('=== UNHANDLED PROMISE REJECTION ===');
-            console.error('Reason:', event.reason);
-            console.error('Promise:', event.promise);
-            console.error('Stack:', event.reason?.stack);
-            console.error('===================================');
+        // Setup sort select
+        sortSelect.addEventListener('change', e => {
+          currentSort = e.target.value;
+          displayFilteredFiles();
         });
 
-        // Rating management functions
-        function saveRating(albumKey, rating) {
-            try {
-                const ratings = loadAllRatings();
-                ratings[albumKey] = rating;
-                localStorage.setItem('albumRatings', JSON.stringify(ratings));
-                console.log(`Saved rating for ${albumKey}: ${rating} stars`);
-            } catch (error) {
-                console.error('Error saving rating:', error);
+        // Setup rating filter
+        ratingFilter.addEventListener('change', e => {
+          currentRatingFilter = e.target.value;
+          displayFilteredFiles();
+        });
+
+        // Setup filter buttons
+        filterButtons.forEach(btn => {
+          btn.addEventListener('click', () => {
+            if (btn.dataset.group === 'artist') {
+              // Toggle artist grouping
+              groupByArtist = !groupByArtist;
+              btn.classList.toggle('active');
+
+              // Reset filters when grouping by artist
+              if (groupByArtist) {
+                filterButtons.forEach(b => {
+                  if (b.dataset.type) b.classList.remove('active');
+                });
+                document.querySelector('[data-type="all"]').classList.add('active');
+                currentFilter = 'all';
+              }
+            } else {
+              // Regular filter buttons
+              if (groupByArtist) {
+                groupByArtist = false;
+                document.getElementById('artistGroupBtn').classList.remove('active');
+              }
+              filterButtons.forEach(b => {
+                if (b.dataset.type) b.classList.remove('active');
+              });
+              btn.classList.add('active');
+              currentFilter = btn.dataset.type;
             }
+            displayFilteredFiles();
+          });
+        });
+      }
+
+      // Helper function to get album rating
+      function getAlbumRating(artistName, albumName) {
+        const albumKey = `${artistName}/${albumName}`;
+        return loadRating(albumKey);
+      }
+
+      // Helper function to filter albums by rating
+      function filterAlbumsByRating(albumGroups) {
+        if (currentRatingFilter === 'all') {
+          return albumGroups;
         }
 
-        function loadRating(albumKey) {
-            try {
-                const ratings = loadAllRatings();
-                return ratings[albumKey] || 0;
-            } catch (error) {
-                console.error('Error loading rating:', error);
-                return 0;
+        const filtered = {};
+        Object.keys(albumGroups).forEach(artistName => {
+          const artistAlbums = albumGroups[artistName];
+          const filteredAlbums = {};
+
+          Object.keys(artistAlbums).forEach(albumName => {
+            const rating = getAlbumRating(artistName, albumName);
+            let includeAlbum = false;
+
+            if (currentRatingFilter === 'unrated') {
+              includeAlbum = rating === 0;
+            } else {
+              const minRating = parseInt(currentRatingFilter);
+              if (currentRatingFilter === '5') {
+                includeAlbum = rating === 5;
+              } else {
+                includeAlbum = rating >= minRating;
+              }
             }
+
+            if (includeAlbum) {
+              filteredAlbums[albumName] = artistAlbums[albumName];
+            }
+          });
+
+          if (Object.keys(filteredAlbums).length > 0) {
+            filtered[artistName] = filteredAlbums;
+          }
+        });
+
+        return filtered;
+      }
+
+      // Helper function to sort albums
+      function sortAlbums(albumGroups) {
+        const sorted = {};
+
+        Object.keys(albumGroups).forEach(artistName => {
+          const artistAlbums = albumGroups[artistName];
+          const albumEntries = Object.entries(artistAlbums);
+
+          albumEntries.sort((a, b) => {
+            const [albumNameA, filesA] = a;
+            const [albumNameB, filesB] = b;
+            const ratingA = getAlbumRating(artistName, albumNameA);
+            const ratingB = getAlbumRating(artistName, albumNameB);
+
+            switch (currentSort) {
+              case 'name-asc':
+                return albumNameA.localeCompare(albumNameB);
+              case 'name-desc':
+                return albumNameB.localeCompare(albumNameA);
+              case 'rating-desc':
+                if (ratingB !== ratingA) return ratingB - ratingA;
+                return albumNameA.localeCompare(albumNameB);
+              case 'rating-asc':
+                if (ratingA !== ratingB) return ratingA - ratingB;
+                return albumNameA.localeCompare(albumNameB);
+              case 'filecount-desc':
+                if (filesB.length !== filesA.length) return filesB.length - filesA.length;
+                return albumNameA.localeCompare(albumNameB);
+              case 'filecount-asc':
+                if (filesA.length !== filesB.length) return filesA.length - filesB.length;
+                return albumNameA.localeCompare(albumNameB);
+              default:
+                return albumNameA.localeCompare(albumNameB);
+            }
+          });
+
+          sorted[artistName] = Object.fromEntries(albumEntries);
+        });
+
+        // Sort artists
+        const artistEntries = Object.entries(sorted);
+        artistEntries.sort((a, b) => {
+          const [artistNameA] = a;
+          const [artistNameB] = b;
+
+          switch (currentSort) {
+            case 'artist-asc':
+              return artistNameA.localeCompare(artistNameB);
+            case 'artist-desc':
+              return artistNameB.localeCompare(artistNameA);
+            default:
+              return artistNameA.localeCompare(artistNameB);
+          }
+        });
+
+        return Object.fromEntries(artistEntries);
+      }
+
+      function displayFilteredFiles() {
+        if (!allFiles || allFiles.length === 0) {
+          displayFiles({ folder: currentFolder?.folder || '', files: [] });
+          return;
         }
 
-        function loadAllRatings() {
-            try {
-                const ratingsJson = localStorage.getItem('albumRatings');
-                return ratingsJson ? JSON.parse(ratingsJson) : {};
-            } catch (error) {
-                console.error('Error loading all ratings:', error);
-                return {};
+        // Apply filters
+        let filteredFiles = allFiles.filter(file => {
+          // Type filter
+          if (currentFilter !== 'all' && file.type !== currentFilter) {
+            return false;
+          }
+
+          // Search filter - search in filename, artist, and album
+          if (currentSearch) {
+            const searchTerm = currentSearch.toLowerCase();
+            const matchesName = file.name.toLowerCase().includes(searchTerm);
+            const matchesArtist = file.artist && file.artist.toLowerCase().includes(searchTerm);
+            const matchesAlbum = file.album && file.album.toLowerCase().includes(searchTerm);
+
+            if (!matchesName && !matchesArtist && !matchesAlbum) {
+              return false;
             }
+          }
+
+          return true;
+        });
+
+        // Update file count
+        const fileCount = document.getElementById('fileCount');
+        fileCount.textContent = `${filteredFiles.length}件 / ${allFiles.length}件`;
+
+        // Display files (grouped or normal)
+        if (groupByArtist) {
+          displayArtistGroups(filteredFiles);
+        } else {
+          displayFiles({
+            folder: currentFolder.folder,
+            files: filteredFiles
+          });
         }
+      }
+
+      function displayAlbumGroups(files) {
+        const fileList = document.getElementById('fileList');
+        fileList.innerHTML = '';
+
+        // Group files by album
+        const albumGroups = {};
+        files.forEach(file => {
+          const album = file.album || 'アルバム名なし';
+          if (!albumGroups[album]) {
+            albumGroups[album] = [];
+          }
+          albumGroups[album].push(file);
+        });
+
+        // Create album groups
+        Object.keys(albumGroups)
+          .sort()
+          .forEach(albumName => {
+            const albumFiles = albumGroups[albumName];
+            const albumGroup = document.createElement('div');
+            albumGroup.className = 'album-group';
+
+            // Create album header
+            const albumHeader = document.createElement('div');
+            albumHeader.className = 'album-header';
+            albumHeader.addEventListener('click', () => {
+              const albumFilesDiv = albumGroup.querySelector('.album-files');
+              const toggle = albumGroup.querySelector('.album-toggle');
+              albumFilesDiv.classList.toggle('collapsed');
+              toggle.textContent = albumFilesDiv.classList.contains('collapsed') ? '▶' : '▼';
+            });
+
+            const albumInfo = document.createElement('div');
+            const albumTitle = document.createElement('div');
+            albumTitle.className = 'album-title';
+            albumTitle.textContent = albumName;
+
+            const albumMeta = document.createElement('div');
+            albumMeta.className = 'album-meta';
+            const audioCount = albumFiles.filter(f => f.type === 'audio').length;
+            const imageCount = albumFiles.filter(f => f.type === 'image').length;
+            const videoCount = albumFiles.filter(f => f.type === 'video').length;
+            let metaText = `${albumFiles.length}件`;
+            if (audioCount > 0) metaText += ` (🎵${audioCount}`;
+            if (imageCount > 0) metaText += ` 🖼️${imageCount}`;
+            if (videoCount > 0) metaText += ` 🎬${videoCount}`;
+            if (audioCount > 0 || imageCount > 0 || videoCount > 0) metaText += ')';
+            albumMeta.textContent = metaText;
+
+            albumInfo.appendChild(albumTitle);
+            albumInfo.appendChild(albumMeta);
+
+            // Add star rating UI
+            const albumRating = document.createElement('div');
+            albumRating.className = 'album-rating';
+
+            for (let i = 1; i <= 5; i++) {
+              const star = document.createElement('span');
+              star.className = 'star';
+              star.textContent = '★';
+              star.dataset.rating = i;
+              star.dataset.albumKey = `${artistName}/${albumName}`;
+
+              // Add click handler for star rating
+              star.addEventListener('click', async e => {
+                e.stopPropagation();
+                const rating = parseInt(e.target.dataset.rating);
+                const albumKey = e.target.dataset.albumKey;
+
+                // Update visual state
+                const stars = albumRating.querySelectorAll('.star');
+                stars.forEach((s, index) => {
+                  if (index < rating) {
+                    s.classList.add('active');
+                  } else {
+                    s.classList.remove('active');
+                  }
+                });
+
+                // Save rating
+                saveRating(albumKey, rating);
+              });
+
+              albumRating.appendChild(star);
+            }
+
+            albumInfo.appendChild(albumRating);
+
+            // Load and display saved rating
+            const savedRating = loadRating(`${artistName}/${albumName}`);
+            if (savedRating > 0) {
+              const stars = albumRating.querySelectorAll('.star');
+              stars.forEach((s, index) => {
+                if (index < savedRating) {
+                  s.classList.add('active');
+                }
+              });
+            }
+
+            const albumToggle = document.createElement('div');
+            albumToggle.className = 'album-toggle';
+            albumToggle.textContent = '▼';
+
+            albumHeader.appendChild(albumInfo);
+            albumHeader.appendChild(albumToggle);
+
+            // Create album files container
+            const albumFilesDiv = document.createElement('div');
+            albumFilesDiv.className = 'album-files';
+
+            // Add files to album
+            albumFiles.forEach(file => {
+              const fileItem = createFileItem(file);
+              albumFilesDiv.appendChild(fileItem);
+            });
+
+            albumGroup.appendChild(albumHeader);
+            albumGroup.appendChild(albumFilesDiv);
+            fileList.appendChild(albumGroup);
+          });
+      }
+
+      function displayArtistGroups(files) {
+        const fileList = document.getElementById('fileList');
+        fileList.innerHTML = '';
+
+        // Group files by artist, then by album
+        let artistGroups = {};
+        files.forEach(file => {
+          const artist = file.artist || 'アーティスト名なし';
+          const album = file.album || 'アルバム名なし';
+
+          if (!artistGroups[artist]) {
+            artistGroups[artist] = {};
+          }
+          if (!artistGroups[artist][album]) {
+            artistGroups[artist][album] = [];
+          }
+          artistGroups[artist][album].push(file);
+        });
+
+        // Apply rating filter
+        artistGroups = filterAlbumsByRating(artistGroups);
+
+        // Apply sorting
+        artistGroups = sortAlbums(artistGroups);
+
+        // Create artist groups
+        Object.keys(artistGroups).forEach(artistName => {
+          const artistAlbums = artistGroups[artistName];
+          const artistGroup = document.createElement('div');
+          artistGroup.className = 'artist-group';
+
+          // Create artist header
+          const artistHeader = document.createElement('div');
+          artistHeader.className = 'artist-header';
+          artistHeader.addEventListener('click', () => {
+            const artistAlbumsDiv = artistGroup.querySelector('.artist-albums');
+            const toggle = artistGroup.querySelector('.album-toggle');
+            artistAlbumsDiv.classList.toggle('collapsed');
+            toggle.textContent = artistAlbumsDiv.classList.contains('collapsed') ? '▶' : '▼';
+          });
+
+          const artistInfo = document.createElement('div');
+          const artistTitle = document.createElement('div');
+          artistTitle.className = 'artist-title';
+          artistTitle.textContent = `📀 ${artistName}`;
+
+          const artistMeta = document.createElement('div');
+          artistMeta.className = 'artist-meta';
+          const albumCount = Object.keys(artistAlbums).length;
+          const totalFiles = Object.values(artistAlbums).flat().length;
+          const audioCount = Object.values(artistAlbums)
+            .flat()
+            .filter(f => f.type === 'audio').length;
+          const imageCount = Object.values(artistAlbums)
+            .flat()
+            .filter(f => f.type === 'image').length;
+          const videoCount = Object.values(artistAlbums)
+            .flat()
+            .filter(f => f.type === 'video').length;
+
+          let metaText = `${albumCount}アルバム, ${totalFiles}件`;
+          if (audioCount > 0) metaText += ` (🎵${audioCount}`;
+          if (imageCount > 0) metaText += ` 🖼️${imageCount}`;
+          if (videoCount > 0) metaText += ` 🎬${videoCount}`;
+          if (audioCount > 0 || imageCount > 0 || videoCount > 0) metaText += ')';
+          artistMeta.textContent = metaText;
+
+          artistInfo.appendChild(artistTitle);
+          artistInfo.appendChild(artistMeta);
+
+          const artistToggle = document.createElement('div');
+          artistToggle.className = 'album-toggle';
+          artistToggle.textContent = '▼';
+
+          artistHeader.appendChild(artistInfo);
+          artistHeader.appendChild(artistToggle);
+
+          // Create artist albums container
+          const artistAlbumsDiv = document.createElement('div');
+          artistAlbumsDiv.className = 'artist-albums';
+
+          // Add albums to artist
+          Object.keys(artistAlbums)
+            .sort()
+            .forEach(albumName => {
+              const albumFiles = artistAlbums[albumName];
+              const nestedAlbum = document.createElement('div');
+              nestedAlbum.className = 'nested-album';
+
+              // Create album header
+              const albumHeader = document.createElement('div');
+              albumHeader.className = 'album-header';
+              albumHeader.addEventListener('click', () => {
+                const albumFilesDiv = nestedAlbum.querySelector('.album-files');
+                const toggle = nestedAlbum.querySelector('.album-toggle');
+                albumFilesDiv.classList.toggle('collapsed');
+                toggle.textContent = albumFilesDiv.classList.contains('collapsed') ? '▶' : '▼';
+              });
+
+              const albumInfo = document.createElement('div');
+              const albumTitle = document.createElement('div');
+              albumTitle.className = 'album-title';
+              albumTitle.textContent = `📁 ${albumName}`;
+
+              const albumMeta = document.createElement('div');
+              albumMeta.className = 'album-meta';
+              const albumAudioCount = albumFiles.filter(f => f.type === 'audio').length;
+              const albumImageCount = albumFiles.filter(f => f.type === 'image').length;
+              const albumVideoCount = albumFiles.filter(f => f.type === 'video').length;
+              let albumMetaText = `${albumFiles.length}件`;
+              if (albumAudioCount > 0) albumMetaText += ` (🎵${albumAudioCount}`;
+              if (albumImageCount > 0) albumMetaText += ` 🖼️${albumImageCount}`;
+              if (albumVideoCount > 0) albumMetaText += ` 🎬${albumVideoCount}`;
+              if (albumAudioCount > 0 || albumImageCount > 0 || albumVideoCount > 0)
+                albumMetaText += ')';
+              albumMeta.textContent = albumMetaText;
+
+              albumInfo.appendChild(albumTitle);
+              albumInfo.appendChild(albumMeta);
+
+              // Add star rating UI
+              const albumRating = document.createElement('div');
+              albumRating.className = 'album-rating';
+
+              for (let i = 1; i <= 5; i++) {
+                const star = document.createElement('span');
+                star.className = 'star';
+                star.textContent = '★';
+                star.dataset.rating = i;
+                star.dataset.albumKey = `${artistName}/${albumName}`;
+
+                // Add click handler for star rating
+                star.addEventListener('click', async e => {
+                  e.stopPropagation();
+                  const rating = parseInt(e.target.dataset.rating);
+                  const albumKey = e.target.dataset.albumKey;
+
+                  // Update visual state
+                  const stars = albumRating.querySelectorAll('.star');
+                  stars.forEach((s, index) => {
+                    if (index < rating) {
+                      s.classList.add('active');
+                    } else {
+                      s.classList.remove('active');
+                    }
+                  });
+
+                  // Save rating
+                  saveRating(albumKey, rating);
+                });
+
+                albumRating.appendChild(star);
+              }
+
+              albumInfo.appendChild(albumRating);
+
+              // Load and display saved rating
+              const savedRating = loadRating(`${artistName}/${albumName}`);
+              if (savedRating > 0) {
+                const stars = albumRating.querySelectorAll('.star');
+                stars.forEach((s, index) => {
+                  if (index < savedRating) {
+                    s.classList.add('active');
+                  }
+                });
+              }
+
+              const albumToggle = document.createElement('div');
+              albumToggle.className = 'album-toggle';
+              albumToggle.textContent = '▶';
+
+              albumHeader.appendChild(albumInfo);
+              albumHeader.appendChild(albumToggle);
+
+              // Create album files container (collapsed by default)
+              const albumFilesDiv = document.createElement('div');
+              albumFilesDiv.className = 'album-files collapsed';
+
+              // Add files to album
+              albumFiles.forEach(file => {
+                const fileItem = createFileItem(file);
+                albumFilesDiv.appendChild(fileItem);
+              });
+
+              nestedAlbum.appendChild(albumHeader);
+              nestedAlbum.appendChild(albumFilesDiv);
+              artistAlbumsDiv.appendChild(nestedAlbum);
+            });
+
+          artistGroup.appendChild(artistHeader);
+          artistGroup.appendChild(artistAlbumsDiv);
+          fileList.appendChild(artistGroup);
+        });
+      }
+
+      function createFileItem(file) {
+        const icon = getFileIcon(file.type);
+        const sizeStr = formatFileSize(file.size);
+        const dateStr = new Date(file.modified).toLocaleDateString('ja-JP');
+
+        // Create file item container
+        const fileItem = document.createElement('div');
+        fileItem.className = 'file-item';
+        fileItem.dataset.path = file.path;
+
+        // Add click event listener
+        fileItem.addEventListener('click', () => {
+          previewFile(file.path, file.type, file.name, file.size);
+        });
+
+        // Create icon element
+        const iconDiv = document.createElement('div');
+        iconDiv.className = 'file-icon';
+        iconDiv.textContent = icon;
+
+        // Create details container
+        const detailsDiv = document.createElement('div');
+        detailsDiv.className = 'file-details';
+
+        // Create file name element (show title if available)
+        const fileName = document.createElement('div');
+        fileName.className = 'file-name';
+        fileName.textContent = file.title || file.name;
+
+        // Create file meta element
+        const fileMeta = document.createElement('div');
+        fileMeta.className = 'file-meta';
+
+        // Add artist info for audio files
+        let metaText = `${file.type} • ${sizeStr} • ${dateStr}`;
+        if (file.artist && file.type === 'audio') {
+          metaText = `${file.artist} • ${metaText}`;
+        }
+        if (file.relativePath) {
+          metaText += ` (${file.relativePath}/)`;
+        }
+        fileMeta.textContent = metaText;
+
+        // Assemble the structure
+        detailsDiv.appendChild(fileName);
+        detailsDiv.appendChild(fileMeta);
+        fileItem.appendChild(iconDiv);
+        fileItem.appendChild(detailsDiv);
+
+        return fileItem;
+      }
+
+      async function previewFile(filePath, fileType, fileName, fileSize) {
+        // Remove previous selection
+        document.querySelectorAll('.file-item').forEach(item => {
+          item.classList.remove('selected');
+        });
+
+        // Add selection to clicked item
+        event.target.closest('.file-item').classList.add('selected');
+
+        const previewContent = document.getElementById('previewContent');
+        const sizeStr = formatFileSize(fileSize);
+
+        // Show loading state
+        previewContent.innerHTML = '';
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'loading';
+        const loadingText = document.createElement('p');
+        loadingText.textContent = 'ファイルを読み込み中...';
+        loadingDiv.appendChild(loadingText);
+        previewContent.appendChild(loadingDiv);
+
+        try {
+          const dataUrl = await ipcRenderer.invoke('get-file-url', filePath);
+
+          if (!dataUrl) {
+            throw new Error('ファイルの読み込みに失敗しました');
+          }
+
+          // Create preview content container
+          previewContent.innerHTML = '';
+          const previewDiv = document.createElement('div');
+          previewDiv.className = 'preview-content';
+
+          // Create media element
+          let mediaEl;
+          switch (fileType) {
+            case 'image':
+              mediaEl = document.createElement('img');
+              mediaEl.src = dataUrl;
+              mediaEl.className = 'preview-image';
+              mediaEl.alt = fileName;
+              mediaEl.style.opacity = '0';
+              mediaEl.style.transition = 'opacity 0.3s';
+              mediaEl.onload = () => (mediaEl.style.opacity = '1');
+              break;
+            case 'video':
+              mediaEl = document.createElement('video');
+              mediaEl.className = 'preview-video';
+              mediaEl.controls = true;
+              mediaEl.preload = 'metadata';
+              const videoSource = document.createElement('source');
+              videoSource.src = dataUrl;
+              mediaEl.appendChild(videoSource);
+              const videoFallback = document.createElement('p');
+              videoFallback.textContent = 'このブラウザは動画の再生をサポートしていません。';
+              mediaEl.appendChild(videoFallback);
+              break;
+            case 'audio':
+              const audioContainer = document.createElement('div');
+              audioContainer.style.textAlign = 'center';
+              audioContainer.style.margin = '40px 0';
+              const audioIcon = document.createElement('div');
+              audioIcon.style.fontSize = '48px';
+              audioIcon.style.marginBottom = '20px';
+              audioIcon.textContent = '🎵';
+              const audioEl = document.createElement('audio');
+              audioEl.className = 'preview-audio';
+              audioEl.controls = true;
+              audioEl.preload = 'metadata';
+              const audioSource = document.createElement('source');
+              audioSource.src = dataUrl;
+              audioEl.appendChild(audioSource);
+              const audioFallback = document.createElement('p');
+              audioFallback.textContent = 'このブラウザは音声の再生をサポートしていません。';
+              audioEl.appendChild(audioFallback);
+              audioContainer.appendChild(audioIcon);
+              audioContainer.appendChild(audioEl);
+              mediaEl = audioContainer;
+              break;
+            default:
+              const placeholder = document.createElement('div');
+              placeholder.className = 'preview-placeholder';
+              const placeholderIcon = document.createElement('div');
+              placeholderIcon.style.fontSize = '48px';
+              placeholderIcon.style.marginBottom = '20px';
+              placeholderIcon.textContent = '📄';
+              const placeholderText = document.createElement('p');
+              placeholderText.textContent = 'このファイル形式はプレビューできません';
+              placeholder.appendChild(placeholderIcon);
+              placeholder.appendChild(placeholderText);
+              mediaEl = placeholder;
+          }
+
+          // Create info section
+          const infoDiv = document.createElement('div');
+          infoDiv.className = 'preview-info';
+
+          const fileNameInfo = document.createElement('div');
+          const fileNameLabel = document.createElement('strong');
+          fileNameLabel.textContent = 'ファイル名:';
+          fileNameInfo.appendChild(fileNameLabel);
+          fileNameInfo.appendChild(document.createTextNode(' ' + fileName));
+
+          const fileSizeInfo = document.createElement('div');
+          const fileSizeLabel = document.createElement('strong');
+          fileSizeLabel.textContent = 'ファイルサイズ:';
+          fileSizeInfo.appendChild(fileSizeLabel);
+          fileSizeInfo.appendChild(document.createTextNode(' ' + sizeStr));
+
+          const fileTypeInfo = document.createElement('div');
+          const fileTypeLabel = document.createElement('strong');
+          fileTypeLabel.textContent = 'ファイル形式:';
+          fileTypeInfo.appendChild(fileTypeLabel);
+          fileTypeInfo.appendChild(document.createTextNode(' ' + fileType));
+
+          const filePathInfo = document.createElement('div');
+          const filePathLabel = document.createElement('strong');
+          filePathLabel.textContent = 'パス:';
+          filePathInfo.appendChild(filePathLabel);
+          filePathInfo.appendChild(document.createTextNode(' ' + filePath));
+
+          infoDiv.appendChild(fileNameInfo);
+          infoDiv.appendChild(fileSizeInfo);
+          infoDiv.appendChild(fileTypeInfo);
+          infoDiv.appendChild(filePathInfo);
+
+          previewDiv.appendChild(mediaEl);
+          previewDiv.appendChild(infoDiv);
+          previewContent.appendChild(previewDiv);
+        } catch (error) {
+          console.error('=== FILE PREVIEW ERROR ===');
+          console.error('Error message:', error.message);
+          console.error('Error stack:', error.stack);
+          console.error('File details:', {
+            fileName: fileName,
+            filePath: filePath,
+            fileType: fileType,
+            fileSize: fileSize
+          });
+          console.error('==========================');
+          previewContent.innerHTML = '';
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'preview-placeholder';
+
+          const errorIcon = document.createElement('div');
+          errorIcon.style.fontSize = '48px';
+          errorIcon.style.marginBottom = '20px';
+          errorIcon.textContent = '❌';
+
+          const errorText = document.createElement('p');
+          errorText.textContent = 'ファイルの読み込みに失敗しました';
+
+          const errorDetails = document.createElement('p');
+          errorDetails.style.fontSize = '0.8em';
+          errorDetails.style.color = '#666';
+          errorDetails.textContent = error.message;
+
+          errorDiv.appendChild(errorIcon);
+          errorDiv.appendChild(errorText);
+          errorDiv.appendChild(errorDetails);
+          previewContent.appendChild(errorDiv);
+        }
+      }
+
+      // Global error handlers for better debugging
+      window.addEventListener('error', event => {
+        console.error('=== GLOBAL JAVASCRIPT ERROR ===');
+        console.error('Error message:', event.message);
+        console.error('Source file:', event.filename);
+        console.error('Line number:', event.lineno);
+        console.error('Column number:', event.colno);
+        console.error('Error object:', event.error);
+        console.error('==============================');
+      });
+
+      window.addEventListener('unhandledrejection', event => {
+        console.error('=== UNHANDLED PROMISE REJECTION ===');
+        console.error('Reason:', event.reason);
+        console.error('Promise:', event.promise);
+        console.error('Stack:', event.reason?.stack);
+        console.error('===================================');
+      });
+
+      // Rating management functions
+      function saveRating(albumKey, rating) {
+        try {
+          const ratings = loadAllRatings();
+          ratings[albumKey] = rating;
+          localStorage.setItem('albumRatings', JSON.stringify(ratings));
+          console.log(`Saved rating for ${albumKey}: ${rating} stars`);
+        } catch (error) {
+          console.error('Error saving rating:', error);
+        }
+      }
+
+      function loadRating(albumKey) {
+        try {
+          const ratings = loadAllRatings();
+          return ratings[albumKey] || 0;
+        } catch (error) {
+          console.error('Error loading rating:', error);
+          return 0;
+        }
+      }
+
+      function loadAllRatings() {
+        try {
+          const ratingsJson = localStorage.getItem('albumRatings');
+          return ratingsJson ? JSON.parse(ratingsJson) : {};
+        } catch (error) {
+          console.error('Error loading all ratings:', error);
+          return {};
+        }
+      }
     </script>
-</body>
+  </body>
 </html>
