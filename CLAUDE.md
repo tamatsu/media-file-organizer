@@ -5,19 +5,43 @@ Electronでローカルのメディアファイルを整理するアプリケー
 
 ## Development Commands
 - `npm start` - Start the development server
-- `npm test` - Run tests
+- `npm test` - Run tests  
+- `npm run test:watch` - Run tests in watch mode
+- `npm run test:coverage` - Run tests with coverage report
 - `npm run build` - Build the application
-- `npm run lint` - Run linting
-- `npm run typecheck` - Run type checking
+- `npm run lint` - Run ESLint code analysis
+- `npm run lint:fix` - Auto-fix ESLint issues
+- `npm run format` - Format code with Prettier
+- `npm run format:check` - Check code formatting
+
+## Code Quality Rules
+開発時に必須で実行するツール：
+
+### コミット前チェックリスト
+1. **静的解析とフォーマット**
+   ```bash
+   npm run lint        # ESLintでコード品質チェック
+   npm run format      # Prettierでコード整形
+   npm test           # 全テスト実行
+   ```
+
+2. **ファイル確認**
+   ```bash
+   git status --porcelain
+   ```
+   コミット対象ファイルを必ず確認してからコミットする
+
+### 開発中のベストプラクティス
+- **新機能開発前**: `npm run lint` でコードベースの健全性確認
+- **コード変更後**: `npm run lint:fix` で自動修正可能な問題を解決
+- **プルリクエスト前**: `npm run test:coverage` でテストカバレッジ確認
+
+### ESLint/Prettier設定
+- **ESLint**: Electron向けルール、メイン・レンダラープロセス別設定
+- **Prettier**: 一貫したコードフォーマット、ESLintと統合済み
+- **設定ファイル**: `eslint.config.js`, `.prettierrc`
 
 ## Git Workflow Rules
-コミット前の確認事項：
-
-**ファイル一覧確認**
-```bash
-git status --porcelain
-```
-コミット対象ファイルを必ず確認してからコミットする
 
 ## Building for Windows (WSL Environment)
 WSL環境でWindows向けのexeをビルドする方法：
@@ -38,11 +62,24 @@ cp /mnt/c/temp/media-organizer/dist/*.exe ./
 
 ## Project Structure
 - `main.js` - Main Electron process
-- `renderer/` - Renderer process files
+- `index.html` - Renderer process UI
+- `tests/` - Jest unit and integration tests
+- `eslint.config.js` - ESLint configuration
+- `.prettierrc` - Prettier formatting rules
+- `jest.config.js` - Test configuration
 - `package.json` - Project dependencies and scripts
 
-## Features (Planned)
-- Browse local media files
-- Organize files by categories
-- Preview media files
-- File management operations
+## Features (Implemented)
+- **ローカルメディアファイル閲覧**: フォルダ選択と再帰的ファイル検索
+- **ディレクトリベース組織化**: フォルダ階層からアーティスト・アルバム情報抽出
+- **階層表示**: アーティスト→アルバム→ファイルの3階層グルーピング
+- **メディアプレビュー**: 画像・動画・音声ファイルのプレビュー表示
+- **検索・フィルタ**: ファイル名・アーティスト・アルバム名での検索
+- **大容量ファイル対応**: file://プロトコルで2GB以上のファイル対応
+- **包括的エラーハンドリング**: 詳細なログ出力とデバッグ支援
+
+## Quality Assurance
+- **単体テスト**: Jest 24テスト（main/renderer分離）
+- **静的解析**: ESLint v9（Electron特化ルール）
+- **コードフォーマット**: Prettier（一貫性保証）
+- **テストカバレッジ**: core関数100%カバー
