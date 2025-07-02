@@ -1,5 +1,4 @@
 // Sorting and filtering functionality tests
-/* global localStorage */
 
 // Mock localStorage for testing
 const localStorageMock = {

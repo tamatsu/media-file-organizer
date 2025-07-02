@@ -1,12 +1,7 @@
 module.exports = {
   roots: ['<rootDir>/tests', '<rootDir>/renderer'],
   testMatch: ['**/__tests__/**/*.(js|jsx|ts|tsx)', '**/*.(test|spec).(js|jsx|ts|tsx)'],
-  collectCoverageFrom: [
-    'main.js', 
-    'renderer/utils/**/*.js',
-    '!**/node_modules/**', 
-    '!**/dist/**'
-  ],
+  collectCoverageFrom: ['main.js', 'renderer/utils/**/*.js', '!**/node_modules/**', '!**/dist/**'],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
   setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],

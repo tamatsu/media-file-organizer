@@ -40,7 +40,7 @@ function filterFilesByType(files, type) {
  */
 function groupFilesByArtist(files) {
   const artistGroups = {};
-  
+
   files.forEach(file => {
     const artist = file.artist || 'アーティスト名なし';
     const album = file.album || 'アルバム名なし';
@@ -53,7 +53,7 @@ function groupFilesByArtist(files) {
     }
     artistGroups[artist][album].push(file);
   });
-  
+
   return artistGroups;
 }
 
@@ -64,7 +64,7 @@ function groupFilesByArtist(files) {
  */
 function groupFilesByAlbum(files) {
   const albumGroups = {};
-  
+
   files.forEach(file => {
     const album = file.album || 'アルバム名なし';
     if (!albumGroups[album]) {
@@ -72,7 +72,7 @@ function groupFilesByAlbum(files) {
     }
     albumGroups[album].push(file);
   });
-  
+
   return albumGroups;
 }
 

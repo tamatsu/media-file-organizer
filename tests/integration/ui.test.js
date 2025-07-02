@@ -1,7 +1,11 @@
 // UI Integration Tests
 
 // Import utility functions
-const { filterFilesBySearch, filterFilesByType, groupFilesByArtist } = require('../../renderer/utils/search');
+const {
+  filterFilesBySearch,
+  filterFilesByType,
+  groupFilesByArtist
+} = require('../../renderer/utils/search');
 
 // Mock localStorage
 const localStorageMock = {

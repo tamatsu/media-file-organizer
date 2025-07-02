@@ -391,17 +391,18 @@
 
     <script>
       const { ipcRenderer } = require('electron');
-      
+
       // Load utility modules
       const ratingUtils = require('./renderer/utils/rating');
       const sortingUtils = require('./renderer/utils/sorting');
       const searchUtils = require('./renderer/utils/search');
-      
+
       // Make rating functions available globally for backward compatibility
       window.ratingUtils = ratingUtils;
       const { saveRating, loadRating, loadAllRatings, getAlbumRating } = ratingUtils;
       const { filterAlbumsByRating, sortAlbums } = sortingUtils;
-      const { filterFilesBySearch, filterFilesByType, groupFilesByArtist, groupFilesByAlbum } = searchUtils;
+      const { filterFilesBySearch, filterFilesByType, groupFilesByArtist, groupFilesByAlbum } =
+        searchUtils;
 
       let currentFolder = null;
       let allFiles = [];
@@ -630,9 +631,6 @@
           });
         });
       }
-
-
-
 
       function displayFilteredFiles() {
         if (!allFiles || allFiles.length === 0) {
@@ -1208,7 +1206,6 @@
         console.error('Stack:', event.reason?.stack);
         console.error('===================================');
       });
-
     </script>
   </body>
 </html>

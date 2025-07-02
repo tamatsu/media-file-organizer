@@ -1,4 +1,5 @@
 // Rating management utility functions
+/* global localStorage */
 
 /**
  * Save album rating to localStorage
