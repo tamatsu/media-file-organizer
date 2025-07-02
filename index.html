@@ -396,6 +396,7 @@
       const ratingUtils = require('./renderer/utils/rating');
       const sortingUtils = require('./renderer/utils/sorting');
       const searchUtils = require('./renderer/utils/search');
+      const uiUtils = require('./renderer/utils/ui');
 
       // Make rating functions available globally for backward compatibility
       window.ratingUtils = ratingUtils;
@@ -403,6 +404,7 @@
       const { filterAlbumsByRating, sortAlbums } = sortingUtils;
       const { filterFilesBySearch, filterFilesByType, groupFilesByArtist, groupFilesByAlbum } =
         searchUtils;
+      const { getFileIcon, formatFileSize, formatDate } = uiUtils;
 
       let currentFolder = null;
       let allFiles = [];
@@ -536,27 +538,6 @@
           fileItem.appendChild(detailsDiv);
           fileList.appendChild(fileItem);
         });
-      }
-
-      function getFileIcon(type) {
-        switch (type) {
-          case 'image':
-            return '🖼️';
-          case 'video':
-            return '🎬';
-          case 'audio':
-            return '🎵';
-          default:
-            return '📄';
-        }
-      }
-
-      function formatFileSize(bytes) {
-        if (bytes === 0) return '0 B';
-        const k = 1024;
-        const sizes = ['B', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
       }
 
       function refreshFiles() {
