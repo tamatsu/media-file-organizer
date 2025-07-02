@@ -23,6 +23,14 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('=================================');
 });
 
+// Add debug logging handler
+if (ipcMain) {
+  ipcMain.handle('debug-log', (event, context, message, data) => {
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] [RENDERER] ${context}: ${message}`, data || '');
+  });
+}
+
 function createWindow() {
   const mainWindow = new BrowserWindow({
     width: 1200,

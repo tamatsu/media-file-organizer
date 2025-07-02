@@ -360,6 +360,171 @@
       .nested-album:last-child {
         margin-bottom: 0;
       }
+      /* Grid View Styles */
+      .album-grid-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 20px;
+        padding: 20px 0;
+      }
+      .album-grid-item {
+        background-color: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        padding: 16px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+      .album-grid-item:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+        border-color: #007acc;
+      }
+      .album-card {
+        text-align: center;
+      }
+      .album-card .album-thumbnail-container {
+        width: 120px;
+        height: 120px;
+        margin: 0 auto 12px auto;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+      .album-card .album-thumbnail-container.loading::after {
+        font-size: 24px;
+      }
+      .album-card .album-thumbnail-placeholder {
+        font-size: 32px;
+      }
+      .album-card .album-thumbnail-error {
+        font-size: 24px;
+      }
+      .album-card .album-title {
+        font-size: 14px;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 4px;
+        line-height: 1.3;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .album-card .album-meta {
+        font-size: 11px;
+        color: #666;
+        margin-bottom: 8px;
+      }
+      .album-card .album-rating {
+        margin-top: 8px;
+        display: flex;
+        justify-content: center;
+        gap: 2px;
+      }
+      .album-card .star {
+        font-size: 14px;
+        margin-right: 0;
+      }
+      /* View Toggle Styles */
+      .view-toggle {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-left: auto;
+      }
+      .view-toggle label {
+        font-size: 12px;
+        font-weight: bold;
+        color: #333;
+        white-space: nowrap;
+      }
+      .view-toggle-btn {
+        padding: 6px 10px;
+        border: 1px solid #ddd;
+        background-color: white;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        transition: all 0.2s;
+        min-width: 50px;
+      }
+      .view-toggle-btn:hover {
+        background-color: #e6f3ff;
+      }
+      .view-toggle-btn.active {
+        background-color: #007acc;
+        color: white;
+        border-color: #007acc;
+      }
+      /* Responsive Grid */
+      @media (max-width: 768px) {
+        .album-grid-container {
+          grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+          gap: 15px;
+        }
+        .album-card .album-thumbnail-container {
+          width: 100px;
+          height: 100px;
+        }
+        .album-grid-item {
+          padding: 12px;
+        }
+      }
+      @media (max-width: 480px) {
+        .album-grid-container {
+          grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+          gap: 10px;
+        }
+        .album-card .album-thumbnail-container {
+          width: 80px;
+          height: 80px;
+        }
+        .album-grid-item {
+          padding: 8px;
+        }
+      }
+      /* Album Details Styles */
+      .album-details-container {
+        max-height: calc(100vh - 120px);
+        overflow-y: auto;
+      }
+      .album-details-header {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #e0e0e0;
+      }
+      .album-details-info {
+        flex: 1;
+      }
+      .album-file-list {
+        margin-bottom: 20px;
+      }
+      .album-files-grid {
+        max-height: 300px;
+        overflow-y: auto;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        background-color: #fafafa;
+      }
+      .album-file-item {
+        border-bottom: 1px solid #eee;
+      }
+      .album-file-item:last-child {
+        border-bottom: none;
+      }
+      .album-file-item.selected {
+        background-color: #cce7ff !important;
+        border-color: #007acc;
+      }
+      .album-file-preview {
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        padding: 15px;
+        background-color: #fafafa;
+      }
     </style>
   </head>
   <body>
@@ -414,6 +579,11 @@
                   <option value="unrated">未評価のみ</option>
                 </select>
               </div>
+              <div class="view-toggle">
+                <label for="viewToggle">表示:</label>
+                <button class="view-toggle-btn active" data-view="list">リスト</button>
+                <button class="view-toggle-btn" data-view="grid">グリッド</button>
+              </div>
             </div>
             <div class="file-count" id="fileCount"></div>
           </div>
@@ -449,6 +619,22 @@
       const { getFileIcon, formatFileSize, formatDate } = uiUtils;
       const { getAlbumThumbnailElement } = thumbnailUtils;
 
+      // Error logging utility - logs errors to both browser console and server terminal
+      async function errorLog(context, message, data = null) {
+        const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
+        const logMessage = `[${timestamp}] ERROR ${context}: ${message}`;
+
+        // Browser console
+        console.error(logMessage, data || '');
+
+        // Server terminal via IPC
+        try {
+          await ipcRenderer.invoke('debug-log', context, message, data);
+        } catch (error) {
+          console.warn('Failed to send log to main process:', error);
+        }
+      }
+
       let currentFolder = null;
       let allFiles = [];
       let currentFilter = 'all';
@@ -457,6 +643,7 @@
       let groupByAlbum = false;
       let currentSort = 'name-asc';
       let currentRatingFilter = 'all';
+      let currentViewMode = 'list';
 
       async function selectFolder() {
         const fileList = document.getElementById('fileList');
@@ -601,6 +788,7 @@
         const filterButtons = document.querySelectorAll('.filter-btn');
         const sortSelect = document.getElementById('sortSelect');
         const ratingFilter = document.getElementById('ratingFilter');
+        const viewToggleButtons = document.querySelectorAll('.view-toggle-btn');
 
         // Show filters
         searchFilters.style.display = 'block';
@@ -654,6 +842,29 @@
             displayFilteredFiles();
           });
         });
+
+        // Setup view toggle buttons
+        viewToggleButtons.forEach(btn => {
+          btn.addEventListener('click', () => {
+            // Update active state
+            viewToggleButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Update view mode
+            currentViewMode = btn.dataset.view;
+
+            // Disable grid view when artist grouping is active
+            if (groupByArtist && currentViewMode === 'grid') {
+              // Switch back to list view
+              currentViewMode = 'list';
+              document.querySelector('[data-view="list"]').classList.add('active');
+              btn.classList.remove('active');
+              return;
+            }
+
+            displayFilteredFiles();
+          });
+        });
       }
 
       function displayFilteredFiles() {
@@ -673,11 +884,634 @@
         // Display files (grouped or normal)
         if (groupByArtist) {
           displayArtistGroups(filteredFiles);
+        } else if (currentViewMode === 'grid') {
+          displayAlbumsGrid(filteredFiles);
         } else {
-          displayFiles({
-            folder: currentFolder.folder,
-            files: filteredFiles
+          displayAlbumGroups(filteredFiles);
+        }
+      }
+
+      function displayAlbumsGrid(files) {
+        const fileList = document.getElementById('fileList');
+        fileList.innerHTML = '';
+
+        // Group files by album (simple structure)
+        let albumGroups = groupFilesByAlbum(files);
+
+        // Apply rating filter (for simple album structure)
+        albumGroups = filterAlbumsByRatingSimple(albumGroups, currentRatingFilter);
+
+        // Apply sorting (for simple album structure)
+        albumGroups = sortAlbumsSimple(albumGroups, currentSort);
+
+        // Create grid container
+        const gridContainer = document.createElement('div');
+        gridContainer.className = 'album-grid-container';
+
+        // Create album cards
+        Object.keys(albumGroups).forEach(albumName => {
+          const albumFiles = albumGroups[albumName];
+
+          // Ensure albumFiles is an array
+          if (!Array.isArray(albumFiles)) {
+            errorLog('GridView', 'albumFiles is not an array', {
+              albumName: albumName,
+              albumFilesType: typeof albumFiles,
+              albumFiles: albumFiles
+            });
+            return;
+          }
+
+          // Create grid item
+          const gridItem = document.createElement('div');
+          gridItem.className = 'album-grid-item';
+
+          // Create album card
+          const albumCard = document.createElement('div');
+          albumCard.className = 'album-card';
+
+          // Add album thumbnail
+          const thumbnailElement = getAlbumThumbnailElement(albumFiles, albumName);
+          albumCard.appendChild(thumbnailElement);
+
+          // Create album title
+          const albumTitle = document.createElement('div');
+          albumTitle.className = 'album-title';
+          albumTitle.textContent = albumName;
+          albumCard.appendChild(albumTitle);
+
+          // Create album metadata
+          const albumMeta = document.createElement('div');
+          albumMeta.className = 'album-meta';
+          const audioCount = albumFiles.filter(f => f.type === 'audio').length;
+          const imageCount = albumFiles.filter(f => f.type === 'image').length;
+          const videoCount = albumFiles.filter(f => f.type === 'video').length;
+          let metaText = `${albumFiles.length}件`;
+          if (audioCount > 0) metaText += ` 🎵${audioCount}`;
+          if (imageCount > 0) metaText += ` 🖼️${imageCount}`;
+          if (videoCount > 0) metaText += ` 🎬${videoCount}`;
+          albumMeta.textContent = metaText;
+          albumCard.appendChild(albumMeta);
+
+          // Add star rating UI
+          const albumRating = document.createElement('div');
+          albumRating.className = 'album-rating';
+
+          // Get artist name from the first file in the album for rating key
+          const firstFile = albumFiles[0];
+          const artistName = firstFile.artist || 'アーティスト名なし';
+          const albumKey = `${artistName}/${albumName}`;
+
+          for (let i = 1; i <= 5; i++) {
+            const star = document.createElement('span');
+            star.className = 'star';
+            star.textContent = '★';
+            star.dataset.rating = i;
+            star.dataset.albumKey = albumKey;
+
+            // Add click handler for star rating
+            star.addEventListener('click', async e => {
+              e.stopPropagation();
+              const rating = parseInt(e.target.dataset.rating);
+              const albumKey = e.target.dataset.albumKey;
+
+              // Update visual state
+              const stars = albumRating.querySelectorAll('.star');
+              stars.forEach((s, index) => {
+                if (index < rating) {
+                  s.classList.add('active');
+                } else {
+                  s.classList.remove('active');
+                }
+              });
+
+              // Save rating
+              saveRating(albumKey, rating);
+              console.log(`Rating saved: ${albumKey} = ${rating} stars`);
+            });
+
+            albumRating.appendChild(star);
+          }
+
+          albumCard.appendChild(albumRating);
+
+          // Load and display saved rating
+          const savedRating = loadRating(albumKey);
+          if (savedRating > 0) {
+            const stars = albumRating.querySelectorAll('.star');
+            stars.forEach((s, index) => {
+              if (index < savedRating) {
+                s.classList.add('active');
+              }
+            });
+          }
+
+          // Add click handler to show album details in preview
+          gridItem.addEventListener('click', () => {
+            // Show album details with file list
+            showAlbumDetails(albumFiles, albumName);
           });
+
+          gridItem.appendChild(albumCard);
+          gridContainer.appendChild(gridItem);
+        });
+
+        fileList.appendChild(gridContainer);
+      }
+
+      // Simple rating filter for album-only structure (not nested by artist)
+      function filterAlbumsByRatingSimple(albumGroups, ratingFilter) {
+        if (ratingFilter === 'all') {
+          return albumGroups;
+        }
+
+        const filtered = {};
+
+        Object.keys(albumGroups).forEach(albumName => {
+          const albumFiles = albumGroups[albumName];
+          if (!Array.isArray(albumFiles) || albumFiles.length === 0) return;
+
+          // Get artist name from first file for rating key
+          const firstFile = albumFiles[0];
+          const artistName = firstFile.artist || 'アーティスト名なし';
+          const albumKey = `${artistName}/${albumName}`;
+          const rating = loadRating(albumKey);
+
+          let includeAlbum = false;
+          if (ratingFilter === 'unrated') {
+            includeAlbum = rating === 0;
+          } else {
+            const minRating = parseInt(ratingFilter);
+            if (ratingFilter === '5') {
+              includeAlbum = rating === 5;
+            } else {
+              includeAlbum = rating >= minRating;
+            }
+          }
+
+          if (includeAlbum) {
+            filtered[albumName] = albumFiles;
+          }
+        });
+
+        return filtered;
+      }
+
+      // Simple sorting for album-only structure (not nested by artist)
+      function sortAlbumsSimple(albumGroups, sortBy) {
+        const albumEntries = Object.entries(albumGroups);
+
+        albumEntries.sort(([albumNameA, albumFilesA], [albumNameB, albumFilesB]) => {
+          switch (sortBy) {
+            case 'name-asc':
+              return albumNameA.localeCompare(albumNameB);
+            case 'name-desc':
+              return albumNameB.localeCompare(albumNameA);
+            case 'rating-desc':
+            case 'rating-asc': {
+              // Get ratings for comparison
+              const firstFileA = albumFilesA[0];
+              const firstFileB = albumFilesB[0];
+              const artistA = firstFileA?.artist || 'アーティスト名なし';
+              const artistB = firstFileB?.artist || 'アーティスト名なし';
+              const ratingA = loadRating(`${artistA}/${albumNameA}`);
+              const ratingB = loadRating(`${artistB}/${albumNameB}`);
+
+              if (sortBy === 'rating-desc') {
+                return ratingB - ratingA || albumNameA.localeCompare(albumNameB);
+              } else {
+                return ratingA - ratingB || albumNameA.localeCompare(albumNameB);
+              }
+            }
+            case 'filecount-desc':
+              return (
+                albumFilesB.length - albumFilesA.length || albumNameA.localeCompare(albumNameB)
+              );
+            case 'filecount-asc':
+              return (
+                albumFilesA.length - albumFilesB.length || albumNameA.localeCompare(albumNameB)
+              );
+            default:
+              return albumNameA.localeCompare(albumNameB);
+          }
+        });
+
+        return Object.fromEntries(albumEntries);
+      }
+
+      // Show file preview in the preview panel
+      async function showPreview(file) {
+        if (!file) return;
+
+        const previewContent = document.getElementById('previewContent');
+        const fileName = file.name;
+        const filePath = file.path;
+        const fileType = file.type;
+        const fileSize = file.size;
+        const sizeStr = formatFileSize(fileSize);
+
+        // Show loading state
+        previewContent.innerHTML = '';
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'loading';
+        const loadingText = document.createElement('p');
+        loadingText.textContent = 'ファイルを読み込み中...';
+        loadingDiv.appendChild(loadingText);
+        previewContent.appendChild(loadingDiv);
+
+        try {
+          const dataUrl = await ipcRenderer.invoke('get-file-url', filePath);
+
+          if (!dataUrl) {
+            throw new Error('ファイルの読み込みに失敗しました');
+          }
+
+          // Create preview content container
+          previewContent.innerHTML = '';
+          const previewDiv = document.createElement('div');
+          previewDiv.className = 'preview-content';
+
+          // Create media element
+          let mediaEl;
+          switch (fileType) {
+            case 'image':
+              mediaEl = document.createElement('img');
+              mediaEl.src = dataUrl;
+              mediaEl.className = 'preview-image';
+              mediaEl.alt = fileName;
+              break;
+            case 'video':
+              mediaEl = document.createElement('video');
+              mediaEl.src = dataUrl;
+              mediaEl.className = 'preview-video';
+              mediaEl.controls = true;
+              break;
+            case 'audio':
+              mediaEl = document.createElement('audio');
+              mediaEl.src = dataUrl;
+              mediaEl.className = 'preview-audio';
+              mediaEl.controls = true;
+              break;
+            default:
+              throw new Error('サポートされていないファイル形式です');
+          }
+
+          // Add file information
+          const infoDiv = document.createElement('div');
+          infoDiv.className = 'preview-info';
+
+          const fileNameInfo = document.createElement('p');
+          fileNameInfo.innerHTML = `<strong>ファイル名:</strong> ${fileName}`;
+
+          const fileSizeInfo = document.createElement('p');
+          fileSizeInfo.innerHTML = `<strong>ファイルサイズ:</strong> ${sizeStr}`;
+
+          const fileTypeInfo = document.createElement('p');
+          fileTypeInfo.innerHTML = `<strong>ファイル種別:</strong> ${fileType}`;
+
+          const filePathInfo = document.createElement('p');
+          filePathInfo.innerHTML = `<strong>パス:</strong> ${filePath}`;
+
+          infoDiv.appendChild(fileNameInfo);
+          infoDiv.appendChild(fileSizeInfo);
+          infoDiv.appendChild(fileTypeInfo);
+          infoDiv.appendChild(filePathInfo);
+
+          previewDiv.appendChild(mediaEl);
+          previewDiv.appendChild(infoDiv);
+          previewContent.appendChild(previewDiv);
+        } catch (error) {
+          console.error('=== FILE PREVIEW ERROR ===');
+          console.error('Error message:', error.message);
+          console.error('File details:', {
+            fileName: fileName,
+            filePath: filePath,
+            fileType: fileType,
+            fileSize: fileSize
+          });
+          console.error('==========================');
+
+          previewContent.innerHTML = '';
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'preview-placeholder';
+
+          const errorIcon = document.createElement('div');
+          errorIcon.style.fontSize = '48px';
+          errorIcon.style.marginBottom = '20px';
+          errorIcon.textContent = '❌';
+
+          const errorText = document.createElement('p');
+          errorText.textContent = 'ファイルの読み込みに失敗しました';
+
+          const errorDetails = document.createElement('small');
+          errorDetails.style.color = '#666';
+          errorDetails.textContent = error.message;
+
+          errorDiv.appendChild(errorIcon);
+          errorDiv.appendChild(errorText);
+          errorDiv.appendChild(errorDetails);
+          previewContent.appendChild(errorDiv);
+        }
+      }
+
+      // Show album details in the preview area with file list
+      function showAlbumDetails(albumFiles, albumName) {
+        if (!albumFiles || albumFiles.length === 0) return;
+
+        const previewContent = document.getElementById('previewContent');
+        previewContent.innerHTML = '';
+
+        // Create main container
+        const detailsContainer = document.createElement('div');
+        detailsContainer.className = 'album-details-container';
+
+        // Album header section
+        const albumHeader = document.createElement('div');
+        albumHeader.className = 'album-details-header';
+
+        // Album thumbnail
+        const thumbnailElement = getAlbumThumbnailElement(albumFiles, albumName);
+        thumbnailElement.style.marginRight = '15px';
+
+        // Album info
+        const albumInfo = document.createElement('div');
+        albumInfo.className = 'album-details-info';
+
+        const albumTitle = document.createElement('h3');
+        albumTitle.textContent = albumName;
+        albumTitle.style.margin = '0 0 8px 0';
+
+        const albumMeta = document.createElement('div');
+        const audioCount = albumFiles.filter(f => f.type === 'audio').length;
+        const imageCount = albumFiles.filter(f => f.type === 'image').length;
+        const videoCount = albumFiles.filter(f => f.type === 'video').length;
+        let metaText = `${albumFiles.length}件`;
+        if (audioCount > 0) metaText += ` 🎵${audioCount}`;
+        if (imageCount > 0) metaText += ` 🖼️${imageCount}`;
+        if (videoCount > 0) metaText += ` 🎬${videoCount}`;
+        albumMeta.textContent = metaText;
+        albumMeta.style.color = '#666';
+        albumMeta.style.fontSize = '14px';
+
+        // Album rating
+        const albumRating = document.createElement('div');
+        albumRating.className = 'album-rating';
+        albumRating.style.marginTop = '8px';
+
+        // Get artist name from first file for rating key
+        const firstFile = albumFiles[0];
+        const artistName = firstFile.artist || 'アーティスト名なし';
+        const albumKey = `${artistName}/${albumName}`;
+
+        for (let i = 1; i <= 5; i++) {
+          const star = document.createElement('span');
+          star.className = 'star';
+          star.textContent = '★';
+          star.dataset.rating = i;
+          star.dataset.albumKey = albumKey;
+
+          star.addEventListener('click', async e => {
+            e.stopPropagation();
+            const rating = parseInt(e.target.dataset.rating);
+            const albumKey = e.target.dataset.albumKey;
+
+            // Update visual state
+            const stars = albumRating.querySelectorAll('.star');
+            stars.forEach((s, index) => {
+              if (index < rating) {
+                s.classList.add('active');
+              } else {
+                s.classList.remove('active');
+              }
+            });
+
+            // Save rating
+            saveRating(albumKey, rating);
+          });
+
+          albumRating.appendChild(star);
+        }
+
+        // Load and display saved rating
+        const savedRating = loadRating(albumKey);
+        if (savedRating > 0) {
+          const stars = albumRating.querySelectorAll('.star');
+          stars.forEach((s, index) => {
+            if (index < savedRating) {
+              s.classList.add('active');
+            }
+          });
+        }
+
+        albumInfo.appendChild(albumTitle);
+        albumInfo.appendChild(albumMeta);
+        albumInfo.appendChild(albumRating);
+
+        albumHeader.appendChild(thumbnailElement);
+        albumHeader.appendChild(albumInfo);
+
+        // File list section
+        const fileListSection = document.createElement('div');
+        fileListSection.className = 'album-file-list';
+        fileListSection.style.marginTop = '20px';
+        fileListSection.style.borderTop = '1px solid #ddd';
+        fileListSection.style.paddingTop = '15px';
+
+        const fileListTitle = document.createElement('h4');
+        fileListTitle.textContent = 'ファイル一覧';
+        fileListTitle.style.margin = '0 0 10px 0';
+        fileListTitle.style.color = '#333';
+
+        const fileList = document.createElement('div');
+        fileList.className = 'album-files-grid';
+
+        // Add files to list
+        albumFiles.forEach((file, index) => {
+          const fileItem = document.createElement('div');
+          fileItem.className = 'album-file-item';
+          fileItem.style.cssText = `
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            margin: 2px 0;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+          `;
+
+          fileItem.addEventListener('mouseenter', () => {
+            fileItem.style.backgroundColor = '#f0f8ff';
+          });
+          fileItem.addEventListener('mouseleave', () => {
+            if (!fileItem.classList.contains('selected')) {
+              fileItem.style.backgroundColor = '';
+            }
+          });
+
+          // File icon
+          const icon = getFileIcon(file.type);
+          const iconDiv = document.createElement('div');
+          iconDiv.style.cssText = 'width: 20px; margin-right: 10px; text-align: center;';
+          iconDiv.textContent = icon;
+
+          // File name and details
+          const fileDetails = document.createElement('div');
+          fileDetails.style.flex = '1';
+
+          const fileName = document.createElement('div');
+          fileName.style.fontWeight = 'bold';
+          fileName.style.color = '#333';
+          fileName.textContent = file.name;
+
+          const fileMeta = document.createElement('div');
+          fileMeta.style.fontSize = '12px';
+          fileMeta.style.color = '#666';
+          fileMeta.textContent = `${file.type} • ${formatFileSize(file.size)}`;
+
+          fileDetails.appendChild(fileName);
+          fileDetails.appendChild(fileMeta);
+
+          fileItem.appendChild(iconDiv);
+          fileItem.appendChild(fileDetails);
+
+          // Click handler to show preview
+          fileItem.addEventListener('click', () => {
+            // Remove selection from other items
+            fileList.querySelectorAll('.album-file-item').forEach(item => {
+              item.classList.remove('selected');
+              item.style.backgroundColor = '';
+            });
+
+            // Select current item
+            fileItem.classList.add('selected');
+            fileItem.style.backgroundColor = '#cce7ff';
+
+            // Show preview below
+            showFilePreviewInDetails(file);
+          });
+
+          fileList.appendChild(fileItem);
+
+          // Auto-select first file
+          if (index === 0) {
+            fileItem.click();
+          }
+        });
+
+        fileListSection.appendChild(fileListTitle);
+        fileListSection.appendChild(fileList);
+
+        // Preview section (will be populated by file selection)
+        const previewSection = document.createElement('div');
+        previewSection.className = 'album-file-preview';
+        previewSection.id = 'albumFilePreview';
+        previewSection.style.marginTop = '20px';
+        previewSection.style.borderTop = '1px solid #ddd';
+        previewSection.style.paddingTop = '15px';
+
+        detailsContainer.appendChild(albumHeader);
+        detailsContainer.appendChild(fileListSection);
+        detailsContainer.appendChild(previewSection);
+
+        previewContent.appendChild(detailsContainer);
+      }
+
+      // Show individual file preview within album details
+      async function showFilePreviewInDetails(file) {
+        const previewSection = document.getElementById('albumFilePreview');
+        if (!previewSection) return;
+
+        const fileName = file.name;
+        const filePath = file.path;
+        const fileType = file.type;
+        const fileSize = file.size;
+        const sizeStr = formatFileSize(fileSize);
+
+        // Show loading state
+        previewSection.innerHTML = '';
+        const loadingDiv = document.createElement('div');
+        loadingDiv.textContent = 'ファイルを読み込み中...';
+        loadingDiv.style.textAlign = 'center';
+        loadingDiv.style.padding = '20px';
+        loadingDiv.style.color = '#666';
+        previewSection.appendChild(loadingDiv);
+
+        try {
+          const dataUrl = await ipcRenderer.invoke('get-file-url', filePath);
+
+          if (!dataUrl) {
+            throw new Error('ファイルの読み込みに失敗しました');
+          }
+
+          // Create preview content
+          previewSection.innerHTML = '';
+
+          const previewTitle = document.createElement('h4');
+          previewTitle.textContent = 'プレビュー';
+          previewTitle.style.margin = '0 0 10px 0';
+          previewTitle.style.color = '#333';
+
+          const previewContent = document.createElement('div');
+          previewContent.style.textAlign = 'center';
+
+          // Create media element
+          let mediaEl;
+          switch (fileType) {
+            case 'image':
+              mediaEl = document.createElement('img');
+              mediaEl.src = dataUrl;
+              mediaEl.style.maxWidth = '100%';
+              mediaEl.style.maxHeight = '300px';
+              mediaEl.style.borderRadius = '4px';
+              mediaEl.alt = fileName;
+              break;
+            case 'video':
+              mediaEl = document.createElement('video');
+              mediaEl.src = dataUrl;
+              mediaEl.style.maxWidth = '100%';
+              mediaEl.style.maxHeight = '300px';
+              mediaEl.controls = true;
+              break;
+            case 'audio':
+              mediaEl = document.createElement('audio');
+              mediaEl.src = dataUrl;
+              mediaEl.style.width = '100%';
+              mediaEl.controls = true;
+              break;
+            default:
+              throw new Error('サポートされていないファイル形式です');
+          }
+
+          // File info
+          const fileInfo = document.createElement('div');
+          fileInfo.style.marginTop = '15px';
+          fileInfo.style.textAlign = 'left';
+          fileInfo.style.fontSize = '14px';
+          fileInfo.innerHTML = `
+            <strong>ファイル名:</strong> ${fileName}<br>
+            <strong>サイズ:</strong> ${sizeStr}<br>
+            <strong>種別:</strong> ${fileType}<br>
+            <strong>パス:</strong> ${filePath}
+          `;
+
+          previewContent.appendChild(mediaEl);
+          previewContent.appendChild(fileInfo);
+
+          previewSection.appendChild(previewTitle);
+          previewSection.appendChild(previewContent);
+        } catch (error) {
+          previewSection.innerHTML = '';
+          const errorDiv = document.createElement('div');
+          errorDiv.style.textAlign = 'center';
+          errorDiv.style.padding = '20px';
+          errorDiv.style.color = '#d63031';
+          errorDiv.innerHTML = `
+            <div style="font-size: 24px; margin-bottom: 10px;">❌</div>
+            <div>ファイルの読み込みに失敗しました</div>
+            <small style="color: #666;">${error.message}</small>
+          `;
+          previewSection.appendChild(errorDiv);
         }
       }
 

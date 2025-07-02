@@ -20,8 +20,7 @@ Electronでローカルのメディアファイルを整理するアプリケー
 
 t-wadaの推奨する進め方に従ってください。下記のツールも併用してください
 
-- lint
-
+- validate
 
 ### ESLint/Prettier設定
 
