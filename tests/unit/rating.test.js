@@ -28,37 +28,11 @@ global.console = {
   error: jest.fn()
 };
 
-// Extract rating functions from index.html for testing
-function saveRating(albumKey, rating) {
-  try {
-    const ratings = loadAllRatings();
-    ratings[albumKey] = rating;
-    localStorage.setItem('albumRatings', JSON.stringify(ratings));
-    console.log(`Saved rating for ${albumKey}: ${rating} stars`);
-  } catch (error) {
-    console.error('Error saving rating:', error);
-  }
-}
+// Also set global.localStorage for Node.js environment
+global.localStorage = localStorageMock;
 
-function loadRating(albumKey) {
-  try {
-    const ratings = loadAllRatings();
-    return ratings[albumKey] || 0;
-  } catch (error) {
-    console.error('Error loading rating:', error);
-    return 0;
-  }
-}
-
-function loadAllRatings() {
-  try {
-    const ratingsJson = localStorage.getItem('albumRatings');
-    return ratingsJson ? JSON.parse(ratingsJson) : {};
-  } catch (error) {
-    console.error('Error loading all ratings:', error);
-    return {};
-  }
-}
+// Import rating functions from actual implementation
+const { saveRating, loadRating, loadAllRatings } = require('../../renderer/utils/rating');
 
 describe('Rating System', () => {
   beforeEach(() => {

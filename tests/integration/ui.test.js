@@ -1,5 +1,8 @@
 // UI Integration Tests
 
+// Import utility functions
+const { filterFilesBySearch, filterFilesByType, groupFilesByArtist } = require('../../renderer/utils/search');
+
 // Mock localStorage
 const localStorageMock = {
   data: {},
@@ -257,42 +260,29 @@ describe('UI Integration Tests', () => {
         { name: 'Beatles - Let It Be.mp3', artist: 'Beatles', album: 'Let It Be' }
       ];
 
-      // Simulate search filter logic
-      const filterFiles = (files, searchTerm) => {
-        if (!searchTerm) {
-          return files;
-        }
-
-        const term = searchTerm.toLowerCase();
-        return files.filter(file => {
-          const matchesName = file.name.toLowerCase().includes(term);
-          const matchesArtist = file.artist && file.artist.toLowerCase().includes(term);
-          const matchesAlbum = file.album && file.album.toLowerCase().includes(term);
-          return matchesName || matchesArtist || matchesAlbum;
-        });
-      };
+      // Use actual implementation function
 
       // Test name search
-      let filtered = filterFiles(mockFiles, 'Hey Jude');
+      let filtered = filterFilesBySearch(mockFiles, 'Hey Jude');
       expect(filtered).toHaveLength(1);
       expect(filtered[0].name).toContain('Hey Jude');
 
       // Test artist search
-      filtered = filterFiles(mockFiles, 'Beatles');
+      filtered = filterFilesBySearch(mockFiles, 'Beatles');
       expect(filtered).toHaveLength(2);
       expect(filtered.every(f => f.artist === 'Beatles')).toBe(true);
 
       // Test album search
-      filtered = filterFiles(mockFiles, 'Opera');
+      filtered = filterFilesBySearch(mockFiles, 'Opera');
       expect(filtered).toHaveLength(1);
       expect(filtered[0].album).toContain('Opera');
 
       // Test no matches
-      filtered = filterFiles(mockFiles, 'NonExistent');
+      filtered = filterFilesBySearch(mockFiles, 'NonExistent');
       expect(filtered).toHaveLength(0);
 
       // Test empty search
-      filtered = filterFiles(mockFiles, '');
+      filtered = filterFilesBySearch(mockFiles, '');
       expect(filtered).toHaveLength(3);
     });
 
@@ -304,25 +294,20 @@ describe('UI Integration Tests', () => {
         { name: 'song2.wav', type: 'audio' }
       ];
 
-      const filterByType = (files, type) => {
-        if (type === 'all') {
-          return files;
-        }
-        return files.filter(file => file.type === type);
-      };
+      // Use actual implementation function
 
       // Test audio filter
-      let filtered = filterByType(mockFiles, 'audio');
+      let filtered = filterFilesByType(mockFiles, 'audio');
       expect(filtered).toHaveLength(2);
       expect(filtered.every(f => f.type === 'audio')).toBe(true);
 
       // Test image filter
-      filtered = filterByType(mockFiles, 'image');
+      filtered = filterFilesByType(mockFiles, 'image');
       expect(filtered).toHaveLength(1);
       expect(filtered[0].type).toBe('image');
 
       // Test all filter
-      filtered = filterByType(mockFiles, 'all');
+      filtered = filterFilesByType(mockFiles, 'all');
       expect(filtered).toHaveLength(4);
     });
   });
@@ -336,25 +321,8 @@ describe('UI Integration Tests', () => {
         { name: 'song4.mp3', artist: 'Queen', album: 'A Night at the Opera' }
       ];
 
-      // Simulate grouping logic
-      const groupByArtist = files => {
-        const artistGroups = {};
-        files.forEach(file => {
-          const artist = file.artist || 'アーティスト名なし';
-          const album = file.album || 'アルバム名なし';
-
-          if (!artistGroups[artist]) {
-            artistGroups[artist] = {};
-          }
-          if (!artistGroups[artist][album]) {
-            artistGroups[artist][album] = [];
-          }
-          artistGroups[artist][album].push(file);
-        });
-        return artistGroups;
-      };
-
-      const grouped = groupByArtist(mockFiles);
+      // Use actual implementation function
+      const grouped = groupFilesByArtist(mockFiles);
 
       // Verify grouping
       expect(Object.keys(grouped)).toHaveLength(2); // Beatles, Queen
