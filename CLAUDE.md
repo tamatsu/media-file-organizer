@@ -18,29 +18,10 @@ Electronでローカルのメディアファイルを整理するアプリケー
 
 ## Code Quality Rules
 
-開発時に必須で実行するツール：
+t-wadaの推奨する進め方に従ってください。下記のツールも併用してください
 
-### コミット前チェックリスト
+- lint
 
-1. **静的解析とフォーマット**
-
-   ```bash
-   npm run lint        # ESLintでコード品質チェック
-   npm run format      # Prettierでコード整形
-   npm test           # 全テスト実行
-   ```
-
-2. **ファイル確認**
-   ```bash
-   git status --porcelain
-   ```
-   コミット対象ファイルを必ず確認してからコミットする
-
-### 開発中のベストプラクティス
-
-- **新機能開発前**: `npm run lint` でコードベースの健全性確認
-- **コード変更後**: `npm run lint:fix` で自動修正可能な問題を解決
-- **プルリクエスト前**: `npm run test:coverage` でテストカバレッジ確認
 
 ### ESLint/Prettier設定
 

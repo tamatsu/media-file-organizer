@@ -28,6 +28,11 @@ module.exports = {
       displayName: 'ui-integration',
       testEnvironment: 'jsdom',
       testMatch: ['<rootDir>/tests/integration/ui.test.js']
+    },
+    {
+      displayName: 'thumbnail',
+      testEnvironment: 'jsdom',
+      testMatch: ['<rootDir>/tests/unit/thumbnail.test.js']
     }
   ]
 };

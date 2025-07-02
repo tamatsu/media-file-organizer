@@ -241,6 +241,47 @@
       .album-header:hover {
         background-color: #e9ecef;
       }
+      .album-thumbnail-container {
+        width: 48px;
+        height: 48px;
+        margin-right: 12px;
+        flex-shrink: 0;
+        border-radius: 6px;
+        overflow: hidden;
+        background-color: #f8f9fa;
+        border: 1px solid #e0e0e0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .album-thumbnail-container.loading {
+        background-color: #e9ecef;
+        position: relative;
+      }
+      .album-thumbnail-container.loading::after {
+        content: '⏳';
+        font-size: 16px;
+      }
+      .album-thumbnail-container.placeholder {
+        background-color: #f1f3f4;
+      }
+      .album-thumbnail-container.error {
+        background-color: #ffeaa7;
+      }
+      .album-thumbnail {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .album-thumbnail-placeholder {
+        font-size: 20px;
+        color: #666;
+      }
+      .album-thumbnail-error {
+        font-size: 16px;
+        color: #d63031;
+      }
       .album-title {
         font-weight: bold;
         color: #333;
@@ -397,6 +438,7 @@
       const sortingUtils = require('./renderer/utils/sorting');
       const searchUtils = require('./renderer/utils/search');
       const uiUtils = require('./renderer/utils/ui');
+      const thumbnailUtils = require('./renderer/utils/thumbnail');
 
       // Make rating functions available globally for backward compatibility
       window.ratingUtils = ratingUtils;
@@ -405,6 +447,7 @@
       const { filterFilesBySearch, filterFilesByType, groupFilesByArtist, groupFilesByAlbum } =
         searchUtils;
       const { getFileIcon, formatFileSize, formatDate } = uiUtils;
+      const { getAlbumThumbnailElement } = thumbnailUtils;
 
       let currentFolder = null;
       let allFiles = [];
@@ -670,6 +713,9 @@
               toggle.textContent = albumFilesDiv.classList.contains('collapsed') ? '▶' : '▼';
             });
 
+            // Add album thumbnail
+            const thumbnailElement = getAlbumThumbnailElement(albumFiles, albumName);
+
             const albumInfo = document.createElement('div');
             const albumTitle = document.createElement('div');
             albumTitle.className = 'album-title';
@@ -748,6 +794,7 @@
             albumToggle.className = 'album-toggle';
             albumToggle.textContent = '▼';
 
+            albumHeader.appendChild(thumbnailElement);
             albumHeader.appendChild(albumInfo);
             albumHeader.appendChild(albumToggle);
 
@@ -854,6 +901,9 @@
                 toggle.textContent = albumFilesDiv.classList.contains('collapsed') ? '▶' : '▼';
               });
 
+              // Add album thumbnail
+              const albumThumbnailElement = getAlbumThumbnailElement(albumFiles, albumName);
+
               const albumInfo = document.createElement('div');
               const albumTitle = document.createElement('div');
               albumTitle.className = 'album-title';
@@ -929,6 +979,7 @@
               albumToggle.className = 'album-toggle';
               albumToggle.textContent = '▶';
 
+              albumHeader.appendChild(albumThumbnailElement);
               albumHeader.appendChild(albumInfo);
               albumHeader.appendChild(albumToggle);
 
