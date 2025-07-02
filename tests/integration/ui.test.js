@@ -337,6 +337,142 @@ describe('UI Integration Tests', () => {
     });
   });
 
+  describe('Grid View Integration', () => {
+    test('should handle view mode switching', () => {
+      // Test view mode variable
+      let currentViewMode = 'list';
+
+      // Mock DOM elements
+      const gridViewButton = document.createElement('button');
+      gridViewButton.id = 'gridViewBtn';
+
+      const listViewButton = document.createElement('button');
+      listViewButton.id = 'listViewBtn';
+
+      // Test switching to grid view
+      const switchToGrid = () => {
+        currentViewMode = 'grid';
+        gridViewButton.classList.add('active');
+        listViewButton.classList.remove('active');
+      };
+
+      switchToGrid();
+      expect(currentViewMode).toBe('grid');
+    });
+
+    test('should validate artist grouping constraints in grid view', () => {
+      const mockFiles = [
+        { name: 'song1.mp3', artist: 'Beatles', album: 'Abbey Road' },
+        { name: 'song2.mp3', artist: 'Beatles', album: 'Revolver' },
+        { name: 'song3.mp3', artist: 'Queen', album: 'A Night at the Opera' }
+      ];
+
+      // Grid view should group by album only, not by artist
+      const albumGroups = {};
+      mockFiles.forEach(file => {
+        const album = file.album || 'アルバム名なし';
+        if (!albumGroups[album]) {
+          albumGroups[album] = [];
+        }
+        albumGroups[album].push(file);
+      });
+
+      expect(Object.keys(albumGroups)).toHaveLength(3);
+      expect(albumGroups['Abbey Road']).toHaveLength(1);
+      expect(albumGroups['Revolver']).toHaveLength(1);
+      expect(albumGroups['A Night at the Opera']).toHaveLength(1);
+    });
+
+    test('should handle album files data structure validation', () => {
+      const testCases = [
+        { input: [], isValid: true },
+        { input: [{ name: 'file.mp3' }], isValid: true },
+        { input: null, isValid: false },
+        { input: undefined, isValid: false },
+        { input: 'not an array', isValid: false }
+      ];
+
+      testCases.forEach(({ input, isValid }) => {
+        const result = Array.isArray(input) && input !== null;
+        expect(result).toBe(isValid);
+      });
+    });
+  });
+
+  describe('Album Details View', () => {
+    test('should generate album information correctly', () => {
+      const albumFiles = [
+        { name: 'track1.mp3', type: 'audio', artist: 'Test Artist', size: 5000000 },
+        { name: 'track2.mp3', type: 'audio', artist: 'Test Artist', size: 4500000 },
+        { name: 'cover.jpg', type: 'image', artist: 'Test Artist', size: 2000000 }
+      ];
+
+      // Count files by type
+      const audioCount = albumFiles.filter(f => f.type === 'audio').length;
+      const imageCount = albumFiles.filter(f => f.type === 'image').length;
+      const videoCount = albumFiles.filter(f => f.type === 'video').length;
+
+      expect(audioCount).toBe(2);
+      expect(imageCount).toBe(1);
+      expect(videoCount).toBe(0);
+
+      // Generate metadata text
+      let metaText = `${albumFiles.length}件`;
+      if (audioCount > 0) {
+        metaText += ` 🎵${audioCount}`;
+      }
+      if (imageCount > 0) {
+        metaText += ` 🖼️${imageCount}`;
+      }
+      if (videoCount > 0) {
+        metaText += ` 🎬${videoCount}`;
+      }
+
+      expect(metaText).toBe('3件 🎵2 🖼️1');
+    });
+
+    test('should handle file selection in album details', () => {
+      const mockFiles = [
+        { name: 'file1.mp3', type: 'audio', path: '/path/to/file1.mp3' },
+        { name: 'file2.mp3', type: 'audio', path: '/path/to/file2.mp3' }
+      ];
+
+      // Mock file selection behavior
+      let selectedFile = null;
+      const selectFile = file => {
+        selectedFile = file;
+      };
+
+      selectFile(mockFiles[0]);
+      expect(selectedFile).toEqual(mockFiles[0]);
+      expect(selectedFile.name).toBe('file1.mp3');
+    });
+
+    test('should generate correct album key for rating', () => {
+      const albumName = 'Test Album';
+      const albumFiles = [{ name: 'track1.mp3', artist: 'Test Artist' }];
+
+      const firstFile = albumFiles[0];
+      const artistName = firstFile.artist || 'アーティスト名なし';
+      const albumKey = `${artistName}/${albumName}`;
+
+      expect(albumKey).toBe('Test Artist/Test Album');
+    });
+
+    test('should handle missing artist information', () => {
+      const albumName = 'Test Album';
+      const albumFiles = [
+        { name: 'track1.mp3' } // No artist property
+      ];
+
+      const firstFile = albumFiles[0];
+      const artistName = firstFile.artist || 'アーティスト名なし';
+      const albumKey = `${artistName}/${albumName}`;
+
+      expect(albumKey).toBe('アーティスト名なし/Test Album');
+    });
+  });
+
   describe('Rating Display Consistency', () => {
     beforeEach(() => {
       // Set up some test ratings

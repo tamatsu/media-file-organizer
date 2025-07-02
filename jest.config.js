@@ -33,6 +33,16 @@ module.exports = {
       displayName: 'thumbnail',
       testEnvironment: 'jsdom',
       testMatch: ['<rootDir>/tests/unit/thumbnail.test.js']
+    },
+    {
+      displayName: 'grid-view',
+      testEnvironment: 'jsdom',
+      testMatch: ['<rootDir>/tests/unit/grid-view.test.js']
+    },
+    {
+      displayName: 'album-details',
+      testEnvironment: 'jsdom',
+      testMatch: ['<rootDir>/tests/unit/album-details.test.js']
     }
   ]
 };
