@@ -7,13 +7,17 @@
  * @returns {Array} Filtered files
  */
 function filterFilesBySearch(files, searchTerm) {
-  if (!searchTerm) {
-    return files;
+  if (!files || !Array.isArray(files) || !searchTerm) {
+    return files || [];
   }
 
   const term = searchTerm.toLowerCase();
   return files.filter(file => {
-    const matchesName = file.name.toLowerCase().includes(term);
+    if (!file) {
+      return false;
+    }
+
+    const matchesName = file.name && file.name.toLowerCase().includes(term);
     const matchesArtist = file.artist && file.artist.toLowerCase().includes(term);
     const matchesAlbum = file.album && file.album.toLowerCase().includes(term);
     return matchesName || matchesArtist || matchesAlbum;
@@ -27,10 +31,13 @@ function filterFilesBySearch(files, searchTerm) {
  * @returns {Array} Filtered files
  */
 function filterFilesByType(files, type) {
+  if (!files || !Array.isArray(files)) {
+    return [];
+  }
   if (type === 'all') {
     return files;
   }
-  return files.filter(file => file.type === type);
+  return files.filter(file => file && file.type === type);
 }
 
 /**
@@ -39,9 +46,17 @@ function filterFilesByType(files, type) {
  * @returns {Object} Grouped files by artist and album
  */
 function groupFilesByArtist(files) {
+  if (!files || !Array.isArray(files)) {
+    return {};
+  }
+
   const artistGroups = {};
 
   files.forEach(file => {
+    if (!file) {
+      return;
+    }
+
     const artist = file.artist || 'アーティスト名なし';
     const album = file.album || 'アルバム名なし';
 
@@ -63,9 +78,17 @@ function groupFilesByArtist(files) {
  * @returns {Object} Grouped files by album
  */
 function groupFilesByAlbum(files) {
+  if (!files || !Array.isArray(files)) {
+    return {};
+  }
+
   const albumGroups = {};
 
   files.forEach(file => {
+    if (!file) {
+      return;
+    }
+
     const album = file.album || 'アルバム名なし';
     if (!albumGroups[album]) {
       albumGroups[album] = [];

@@ -48,6 +48,16 @@ module.exports = {
       displayName: 'playlist',
       testEnvironment: 'jsdom',
       testMatch: ['<rootDir>/tests/unit/playlist.test.js']
+    },
+    {
+      displayName: 'rating',
+      testEnvironment: 'jsdom',
+      testMatch: ['<rootDir>/tests/unit/rating.test.js']
+    },
+    {
+      displayName: 'search',
+      testEnvironment: 'jsdom',
+      testMatch: ['<rootDir>/tests/unit/search.test.js']
     }
   ]
 };

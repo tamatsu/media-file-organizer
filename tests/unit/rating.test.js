@@ -2,19 +2,27 @@
 /* global localStorage */
 
 // Mock localStorage for testing
-const localStorageMock = {
-  data: {},
-  getItem: jest.fn(key => localStorageMock.data[key] || null),
-  setItem: jest.fn((key, value) => {
-    localStorageMock.data[key] = value;
-  }),
-  removeItem: jest.fn(key => {
-    delete localStorageMock.data[key];
-  }),
-  clear: jest.fn(() => {
-    localStorageMock.data = {};
-  })
-};
+const localStorageMock = (() => {
+  let store = {};
+  return {
+    get data() {
+      return store;
+    },
+    set data(value) {
+      store = value;
+    },
+    getItem: jest.fn(key => store[key] || null),
+    setItem: jest.fn((key, value) => {
+      store[key] = value;
+    }),
+    removeItem: jest.fn(key => {
+      delete store[key];
+    }),
+    clear: jest.fn(() => {
+      store = {};
+    })
+  };
+})();
 
 // Set up global localStorage mock
 Object.defineProperty(window, 'localStorage', {
@@ -32,12 +40,30 @@ global.console = {
 global.localStorage = localStorageMock;
 
 // Import rating functions from actual implementation
-const { saveRating, loadRating, loadAllRatings } = require('../../renderer/utils/rating');
+const {
+  saveRating,
+  loadRating,
+  loadAllRatings,
+  getAlbumRating
+} = require('../../renderer/utils/rating');
 
 describe('Rating System', () => {
   beforeEach(() => {
-    // Clear localStorage and mocks before each test
+    // Clear localStorage data
     localStorageMock.clear();
+
+    // Clear all mock call history
+    localStorageMock.getItem.mockClear();
+    localStorageMock.setItem.mockClear();
+    localStorageMock.removeItem.mockClear();
+
+    // Reset all mock implementations to default behavior
+    localStorageMock.getItem.mockImplementation(key => localStorageMock.data[key] || null);
+    localStorageMock.setItem.mockImplementation((key, value) => {
+      localStorageMock.data[key] = value;
+    });
+
+    // Clear console mocks
     jest.clearAllMocks();
   });
 
@@ -77,21 +103,29 @@ describe('Rating System', () => {
     });
 
     test('should handle localStorage errors gracefully', () => {
-      localStorage.setItem.mockImplementation(() => {
+      // Temporarily override setItem to throw error
+      const originalSetItem = localStorage.setItem;
+      localStorage.setItem = jest.fn(() => {
         throw new Error('Storage quota exceeded');
       });
 
       saveRating('Artist/Album', 4);
 
       expect(console.error).toHaveBeenCalledWith('Error saving rating:', expect.any(Error));
+
+      // Restore original mock
+      localStorage.setItem = originalSetItem;
     });
   });
 
   describe('loadRating', () => {
     test('should load existing rating', () => {
-      localStorageMock.data.albumRatings = JSON.stringify({
-        'Artist/Album': 4
-      });
+      localStorageMock.setItem(
+        'albumRatings',
+        JSON.stringify({
+          'Artist/Album': 4
+        })
+      );
 
       const rating = loadRating('Artist/Album');
       expect(rating).toBe(4);
@@ -108,18 +142,23 @@ describe('Rating System', () => {
     });
 
     test('should handle localStorage errors gracefully', () => {
-      localStorage.getItem.mockImplementation(() => {
+      // Temporarily override getItem to throw error
+      const originalGetItem = localStorage.getItem;
+      localStorage.getItem = jest.fn(() => {
         throw new Error('Storage access denied');
       });
 
       const rating = loadRating('Artist/Album');
 
       expect(rating).toBe(0);
-      expect(console.error).toHaveBeenCalledWith('Error loading rating:', expect.any(Error));
+      expect(console.error).toHaveBeenCalledWith('Error loading all ratings:', expect.any(Error));
+
+      // Restore original mock
+      localStorage.getItem = originalGetItem;
     });
 
     test('should handle corrupted JSON data', () => {
-      localStorageMock.data.albumRatings = 'invalid json';
+      localStorageMock.setItem('albumRatings', 'invalid json');
 
       const rating = loadRating('Artist/Album');
 
@@ -135,7 +174,7 @@ describe('Rating System', () => {
         'Artist2/Album2': 5,
         'Artist3/Album3': 2
       };
-      localStorageMock.data.albumRatings = JSON.stringify(testData);
+      localStorageMock.setItem('albumRatings', JSON.stringify(testData));
 
       const ratings = loadAllRatings();
       expect(ratings).toEqual(testData);
@@ -147,7 +186,9 @@ describe('Rating System', () => {
     });
 
     test('should handle localStorage errors gracefully', () => {
-      localStorage.getItem.mockImplementation(() => {
+      // Temporarily override getItem to throw error
+      const originalGetItem = localStorage.getItem;
+      localStorage.getItem = jest.fn(() => {
         throw new Error('Storage access denied');
       });
 
@@ -155,10 +196,13 @@ describe('Rating System', () => {
 
       expect(ratings).toEqual({});
       expect(console.error).toHaveBeenCalledWith('Error loading all ratings:', expect.any(Error));
+
+      // Restore original mock
+      localStorage.getItem = originalGetItem;
     });
 
     test('should handle corrupted JSON data', () => {
-      localStorageMock.data.albumRatings = 'corrupted data';
+      localStorageMock.setItem('albumRatings', 'corrupted data');
 
       const ratings = loadAllRatings();
 
@@ -203,6 +247,59 @@ describe('Rating System', () => {
         saveRating(albumKey, rating);
         expect(loadRating(albumKey)).toBe(rating);
       });
+    });
+  });
+
+  describe('getAlbumRating', () => {
+    test('should get rating by artist and album name', () => {
+      localStorageMock.setItem(
+        'albumRatings',
+        JSON.stringify({
+          'Beatles/Abbey Road': 5
+        })
+      );
+
+      const rating = getAlbumRating('Beatles', 'Abbey Road');
+      expect(rating).toBe(5);
+    });
+
+    test('should return 0 for non-existent album', () => {
+      const rating = getAlbumRating('Beatles', 'Sgt Pepper');
+      expect(rating).toBe(0);
+    });
+
+    test('should handle special characters in names', () => {
+      localStorageMock.setItem(
+        'albumRatings',
+        JSON.stringify({
+          'AC/DC/Back in Black': 4
+        })
+      );
+
+      const rating = getAlbumRating('AC/DC', 'Back in Black');
+      expect(rating).toBe(4);
+    });
+
+    test('should handle Unicode characters', () => {
+      localStorageMock.setItem(
+        'albumRatings',
+        JSON.stringify({
+          'アーティスト/アルバム': 3
+        })
+      );
+
+      const rating = getAlbumRating('アーティスト', 'アルバム');
+      expect(rating).toBe(3);
+    });
+
+    test('should handle empty or null parameters', () => {
+      const rating1 = getAlbumRating('', '');
+      const rating2 = getAlbumRating(null, null);
+      const rating3 = getAlbumRating(undefined, undefined);
+
+      expect(rating1).toBe(0);
+      expect(rating2).toBe(0);
+      expect(rating3).toBe(0);
     });
   });
 });
