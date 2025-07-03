@@ -1430,7 +1430,7 @@
       }
 
       // Show individual file preview within album details
-      async function showFilePreviewInDetails(file) {
+      async function showFilePreviewInDetails(file, autoPlay = false) {
         const previewSection = document.getElementById('albumFilePreview');
         if (!previewSection) return;
 
@@ -1504,6 +1504,13 @@
                   }
                 }
               });
+
+              // Auto-play if requested (for continuous playback)
+              if (autoPlay) {
+                mediaEl.play().catch(error => {
+                  console.error('Auto-play failed:', error);
+                });
+              }
               break;
             default:
               throw new Error('サポートされていないファイル形式です');
@@ -1616,8 +1623,8 @@
             });
           }
 
-          // Show preview for the new file
-          await showFilePreviewInDetails(file);
+          // Show preview for the new file with auto-play
+          await showFilePreviewInDetails(file, true);
         } catch (error) {
           console.error('Error playing audio file:', error);
         }
