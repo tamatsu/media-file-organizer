@@ -5,6 +5,7 @@ describe('Main Process Functions', () => {
     test('should parse artist and album from directory path', () => {
       const result = parseDirectoryHierarchy('Beatles/Abbey Road');
       expect(result).toEqual({
+        genre: null,
         artist: 'Beatles',
         album: 'Abbey Road'
       });
@@ -13,6 +14,7 @@ describe('Main Process Functions', () => {
     test('should parse only artist when no album directory', () => {
       const result = parseDirectoryHierarchy('Beatles');
       expect(result).toEqual({
+        genre: null,
         artist: 'Beatles',
         album: null
       });
@@ -21,6 +23,7 @@ describe('Main Process Functions', () => {
     test('should handle empty path', () => {
       const result = parseDirectoryHierarchy('');
       expect(result).toEqual({
+        genre: null,
         artist: null,
         album: null
       });
@@ -29,6 +32,7 @@ describe('Main Process Functions', () => {
     test('should handle null path', () => {
       const result = parseDirectoryHierarchy(null);
       expect(result).toEqual({
+        genre: null,
         artist: null,
         album: null
       });
@@ -37,6 +41,7 @@ describe('Main Process Functions', () => {
     test('should handle undefined path', () => {
       const result = parseDirectoryHierarchy(undefined);
       expect(result).toEqual({
+        genre: null,
         artist: null,
         album: null
       });
@@ -45,14 +50,62 @@ describe('Main Process Functions', () => {
     test('should handle complex directory path', () => {
       const result = parseDirectoryHierarchy('The Beatles/Abbey Road/Disc 1');
       expect(result).toEqual({
-        artist: 'The Beatles',
-        album: 'Abbey Road'
+        genre: 'The Beatles',
+        artist: 'Abbey Road',
+        album: 'Disc 1'
       });
     });
 
     test('should handle Windows-style path separators', () => {
       const result = parseDirectoryHierarchy('Beatles\\Abbey Road');
       expect(result).toEqual({
+        genre: null,
+        artist: 'Beatles',
+        album: 'Abbey Road'
+      });
+    });
+
+    // Tests for 3-level directory structure (genre/artist/album)
+    test('should parse genre, artist and album from 3-level directory path', () => {
+      const result = parseDirectoryHierarchy('Rock/Beatles/Abbey Road');
+      expect(result).toEqual({
+        genre: 'Rock',
+        artist: 'Beatles',
+        album: 'Abbey Road'
+      });
+    });
+
+    test('should handle 3-level path with Windows separators', () => {
+      const result = parseDirectoryHierarchy('Jazz\\Miles Davis\\Kind of Blue');
+      expect(result).toEqual({
+        genre: 'Jazz',
+        artist: 'Miles Davis',
+        album: 'Kind of Blue'
+      });
+    });
+
+    test('should handle 3-level path with special characters', () => {
+      const result = parseDirectoryHierarchy('Classical/Bach & Beethoven/Symphony No. 9');
+      expect(result).toEqual({
+        genre: 'Classical',
+        artist: 'Bach & Beethoven',
+        album: 'Symphony No. 9'
+      });
+    });
+
+    test('should handle 3-level path with Unicode characters', () => {
+      const result = parseDirectoryHierarchy('ジャズ/マイルス・デイビス/カインド・オブ・ブルー');
+      expect(result).toEqual({
+        genre: 'ジャズ',
+        artist: 'マイルス・デイビス',
+        album: 'カインド・オブ・ブルー'
+      });
+    });
+
+    test('should handle 4+ level paths by taking first 3 levels', () => {
+      const result = parseDirectoryHierarchy('Rock/Beatles/Abbey Road/Disc 1/Track 01');
+      expect(result).toEqual({
+        genre: 'Rock',
         artist: 'Beatles',
         album: 'Abbey Road'
       });
@@ -105,15 +158,16 @@ describe('Main Process Functions', () => {
   describe('Error handling', () => {
     test('should handle invalid input types gracefully', () => {
       // Test parseDirectoryHierarchy with various invalid inputs
-      expect(parseDirectoryHierarchy(123)).toEqual({ artist: null, album: null });
-      expect(parseDirectoryHierarchy({})).toEqual({ artist: null, album: null });
-      expect(parseDirectoryHierarchy([])).toEqual({ artist: null, album: null });
-      expect(parseDirectoryHierarchy(true)).toEqual({ artist: null, album: null });
+      expect(parseDirectoryHierarchy(123)).toEqual({ genre: null, artist: null, album: null });
+      expect(parseDirectoryHierarchy({})).toEqual({ genre: null, artist: null, album: null });
+      expect(parseDirectoryHierarchy([])).toEqual({ genre: null, artist: null, album: null });
+      expect(parseDirectoryHierarchy(true)).toEqual({ genre: null, artist: null, album: null });
     });
 
     test('should handle special characters in paths', () => {
       const result = parseDirectoryHierarchy('Artist With Spaces/Album & Title');
       expect(result).toEqual({
+        genre: null,
         artist: 'Artist With Spaces',
         album: 'Album & Title'
       });
@@ -122,6 +176,7 @@ describe('Main Process Functions', () => {
     test('should handle Unicode characters in paths', () => {
       const result = parseDirectoryHierarchy('アーティスト/アルバム名');
       expect(result).toEqual({
+        genre: null,
         artist: 'アーティスト',
         album: 'アルバム名'
       });
@@ -132,6 +187,7 @@ describe('Main Process Functions', () => {
       const longAlbum = 'B'.repeat(1000);
       const result = parseDirectoryHierarchy(`${longArtist}/${longAlbum}`);
       expect(result).toEqual({
+        genre: null,
         artist: longArtist,
         album: longAlbum
       });
@@ -140,16 +196,18 @@ describe('Main Process Functions', () => {
     test('should handle mixed path separators', () => {
       const result = parseDirectoryHierarchy('Artist\\Album/Song');
       expect(result).toEqual({
-        artist: 'Artist',
-        album: 'Album'
+        genre: 'Artist',
+        artist: 'Album',
+        album: 'Song'
       });
     });
 
     test('should handle multiple consecutive separators', () => {
       const result = parseDirectoryHierarchy('Artist//Album');
       expect(result).toEqual({
-        artist: 'Artist',
-        album: ''
+        genre: 'Artist',
+        artist: '',
+        album: 'Album'
       });
     });
 

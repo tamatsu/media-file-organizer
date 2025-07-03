@@ -567,6 +567,12 @@
                   <option value="filecount-asc">ファイル数 (少→多)</option>
                 </select>
               </div>
+              <div class="genre-filter-controls">
+                <label for="genreFilter">ジャンル:</label>
+                <select id="genreFilter" class="genre-filter">
+                  <option value="all">すべてのジャンル</option>
+                </select>
+              </div>
               <div class="rating-filter-controls">
                 <label for="ratingFilter">レーティングフィルター:</label>
                 <select id="ratingFilter" class="rating-filter">
@@ -648,6 +654,7 @@
       let currentViewMode = 'list';
       let currentPlaylist = null;
       let currentAudioElement = null;
+      let currentGenreFilter = 'all';
 
       async function selectFolder() {
         const fileList = document.getElementById('fileList');
@@ -792,10 +799,14 @@
         const filterButtons = document.querySelectorAll('.filter-btn');
         const sortSelect = document.getElementById('sortSelect');
         const ratingFilter = document.getElementById('ratingFilter');
+        const genreFilter = document.getElementById('genreFilter');
         const viewToggleButtons = document.querySelectorAll('.view-toggle-btn');
 
         // Show filters
         searchFilters.style.display = 'block';
+
+        // Populate genre filter options
+        populateGenreFilter();
 
         // Setup search input
         searchInput.addEventListener('input', e => {
@@ -812,6 +823,12 @@
         // Setup rating filter
         ratingFilter.addEventListener('change', e => {
           currentRatingFilter = e.target.value;
+          displayFilteredFiles();
+        });
+
+        // Setup genre filter
+        genreFilter.addEventListener('change', e => {
+          currentGenreFilter = e.target.value;
           displayFilteredFiles();
         });
 
@@ -871,6 +888,47 @@
         });
       }
 
+      function filterFilesByGenre(files, genreFilter) {
+        if (!genreFilter || genreFilter === 'all') {
+          return files;
+        }
+
+        return files.filter(file => file.genre === genreFilter);
+      }
+
+      function populateGenreFilter() {
+        const genreFilter = document.getElementById('genreFilter');
+        if (!genreFilter || !allFiles || allFiles.length === 0) {
+          return;
+        }
+
+        // Get unique genres from all files
+        const genres = new Set();
+        allFiles.forEach(file => {
+          if (file.genre && file.genre.trim()) {
+            genres.add(file.genre);
+          }
+        });
+
+        // Clear existing options except "all"
+        genreFilter.innerHTML = '<option value="all">すべてのジャンル</option>';
+
+        // Add genre options in alphabetical order
+        const sortedGenres = Array.from(genres).sort();
+        sortedGenres.forEach(genre => {
+          const option = document.createElement('option');
+          option.value = genre;
+          option.textContent = genre;
+          genreFilter.appendChild(option);
+        });
+
+        // Show/hide genre filter based on whether there are genres
+        const genreControls = genreFilter.closest('.genre-filter-controls');
+        if (genreControls) {
+          genreControls.style.display = genres.size > 0 ? 'block' : 'none';
+        }
+      }
+
       function displayFilteredFiles() {
         if (!allFiles || allFiles.length === 0) {
           displayFiles({ folder: currentFolder?.folder || '', files: [] });
@@ -880,6 +938,7 @@
         // Apply filters
         let filteredFiles = filterFilesByType(allFiles, currentFilter);
         filteredFiles = filterFilesBySearch(filteredFiles, currentSearch);
+        filteredFiles = filterFilesByGenre(filteredFiles, currentGenreFilter);
 
         // Update file count
         const fileCount = document.getElementById('fileCount');

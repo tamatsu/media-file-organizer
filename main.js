@@ -146,6 +146,7 @@ async function getMediaFiles(folderPath) {
               size: stat.size,
               type: getFileType(ext),
               modified: stat.mtime,
+              genre: hierarchy.genre,
               album: hierarchy.album,
               artist: hierarchy.artist,
               title: null
@@ -180,16 +181,37 @@ async function getMediaFiles(folderPath) {
 
 function parseDirectoryHierarchy(relativePath) {
   if (!relativePath || typeof relativePath !== 'string') {
-    return { artist: null, album: null };
+    return { genre: null, artist: null, album: null };
   }
 
   // Handle both forward slashes and backslashes
   const pathParts = relativePath.split(/[\/\\]/);
 
-  return {
-    artist: pathParts.length >= 1 ? pathParts[0] : null,
-    album: pathParts.length >= 2 ? pathParts[1] : null
-  };
+  // Support both 2-level (artist/album) and 3-level (genre/artist/album) structures
+  if (pathParts.length >= 3) {
+    // 3-level structure: genre/artist/album
+    return {
+      genre: pathParts[0],
+      artist: pathParts[1],
+      album: pathParts[2]
+    };
+  } else if (pathParts.length === 2) {
+    // 2-level structure: artist/album (backward compatibility)
+    return {
+      genre: null,
+      artist: pathParts[0],
+      album: pathParts[1]
+    };
+  } else if (pathParts.length === 1) {
+    // 1-level structure: artist only
+    return {
+      genre: null,
+      artist: pathParts[0],
+      album: null
+    };
+  }
+
+  return { genre: null, artist: null, album: null };
 }
 
 function getFileType(ext) {
