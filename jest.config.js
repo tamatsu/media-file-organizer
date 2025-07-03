@@ -43,6 +43,11 @@ module.exports = {
       displayName: 'album-details',
       testEnvironment: 'jsdom',
       testMatch: ['<rootDir>/tests/unit/album-details.test.js']
+    },
+    {
+      displayName: 'playlist',
+      testEnvironment: 'jsdom',
+      testMatch: ['<rootDir>/tests/unit/playlist.test.js']
     }
   ]
 };

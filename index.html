@@ -607,6 +607,7 @@
       const ratingUtils = require('./renderer/utils/rating');
       const sortingUtils = require('./renderer/utils/sorting');
       const searchUtils = require('./renderer/utils/search');
+      const playlistUtils = require('./renderer/utils/playlist');
       const uiUtils = require('./renderer/utils/ui');
       const thumbnailUtils = require('./renderer/utils/thumbnail');
 
@@ -616,6 +617,7 @@
       const { filterAlbumsByRating, sortAlbums } = sortingUtils;
       const { filterFilesBySearch, filterFilesByType, groupFilesByArtist, groupFilesByAlbum } =
         searchUtils;
+      const { extractAudioFiles, createAlbumPlaylist } = playlistUtils;
       const { getFileIcon, formatFileSize, formatDate } = uiUtils;
       const { getAlbumThumbnailElement } = thumbnailUtils;
 
@@ -644,6 +646,8 @@
       let currentSort = 'name-asc';
       let currentRatingFilter = 'all';
       let currentViewMode = 'list';
+      let currentPlaylist = null;
+      let currentAudioElement = null;
 
       async function selectFolder() {
         const fileList = document.getElementById('fileList');
@@ -1218,6 +1222,9 @@
       function showAlbumDetails(albumFiles, albumName) {
         if (!albumFiles || albumFiles.length === 0) return;
 
+        // Initialize playlist for this album
+        currentPlaylist = createAlbumPlaylist(albumFiles);
+
         const previewContent = document.getElementById('previewContent');
         previewContent.innerHTML = '';
 
@@ -1387,6 +1394,11 @@
             fileItem.classList.add('selected');
             fileItem.style.backgroundColor = '#cce7ff';
 
+            // Update playlist current position if it's an audio file
+            if (currentPlaylist && file.type === 'audio') {
+              currentPlaylist.setCurrentByPath(file.path);
+            }
+
             // Show preview below
             showFilePreviewInDetails(file);
           });
@@ -1478,6 +1490,20 @@
               mediaEl.src = dataUrl;
               mediaEl.style.width = '100%';
               mediaEl.controls = true;
+
+              // Store reference to current audio element
+              currentAudioElement = mediaEl;
+
+              // Add ended event listener for continuous playback
+              mediaEl.addEventListener('ended', () => {
+                if (currentPlaylist && currentPlaylist.hasNext()) {
+                  const nextFile = currentPlaylist.next();
+                  if (nextFile) {
+                    // Auto-play next audio file
+                    playAudioFile(nextFile);
+                  }
+                }
+              });
               break;
             default:
               throw new Error('サポートされていないファイル形式です');
@@ -1496,6 +1522,56 @@
           `;
 
           previewContent.appendChild(mediaEl);
+
+          // Add navigation buttons for audio files
+          if (fileType === 'audio' && currentPlaylist && currentPlaylist.getLength() > 1) {
+            const navButtons = document.createElement('div');
+            navButtons.style.marginTop = '10px';
+            navButtons.style.textAlign = 'center';
+
+            const prevButton = document.createElement('button');
+            prevButton.textContent = '⏮ 前';
+            prevButton.style.marginRight = '10px';
+            prevButton.style.padding = '8px 16px';
+            prevButton.style.border = '1px solid #ddd';
+            prevButton.style.borderRadius = '4px';
+            prevButton.style.backgroundColor = '#f8f9fa';
+            prevButton.style.cursor = 'pointer';
+            prevButton.disabled = !currentPlaylist.hasPrevious();
+
+            const nextButton = document.createElement('button');
+            nextButton.textContent = '次 ⏭';
+            nextButton.style.padding = '8px 16px';
+            nextButton.style.border = '1px solid #ddd';
+            nextButton.style.borderRadius = '4px';
+            nextButton.style.backgroundColor = '#f8f9fa';
+            nextButton.style.cursor = 'pointer';
+            nextButton.disabled = !currentPlaylist.hasNext();
+
+            // Event handlers
+            prevButton.addEventListener('click', () => {
+              if (currentPlaylist.hasPrevious()) {
+                const prevFile = currentPlaylist.previous();
+                if (prevFile) {
+                  playAudioFile(prevFile);
+                }
+              }
+            });
+
+            nextButton.addEventListener('click', () => {
+              if (currentPlaylist.hasNext()) {
+                const nextFile = currentPlaylist.next();
+                if (nextFile) {
+                  playAudioFile(nextFile);
+                }
+              }
+            });
+
+            navButtons.appendChild(prevButton);
+            navButtons.appendChild(nextButton);
+            previewContent.appendChild(navButtons);
+          }
+
           previewContent.appendChild(fileInfo);
 
           previewSection.appendChild(previewTitle);
@@ -1512,6 +1588,38 @@
             <small style="color: #666;">${error.message}</small>
           `;
           previewSection.appendChild(errorDiv);
+        }
+      }
+
+      // Play audio file and update UI for continuous playback
+      async function playAudioFile(file) {
+        if (!file || file.type !== 'audio') return;
+
+        try {
+          // Update file list selection
+          const fileList = document.querySelector('.album-file-list');
+          if (fileList) {
+            // Remove previous selection
+            fileList.querySelectorAll('.album-file-item').forEach(item => {
+              item.classList.remove('selected');
+              item.style.backgroundColor = '';
+            });
+
+            // Find and select the current file item
+            const fileItems = fileList.querySelectorAll('.album-file-item');
+            fileItems.forEach(item => {
+              const fileDetails = item.querySelector('.file-details');
+              if (fileDetails && fileDetails.textContent.includes(file.name)) {
+                item.classList.add('selected');
+                item.style.backgroundColor = '#cce7ff';
+              }
+            });
+          }
+
+          // Show preview for the new file
+          await showFilePreviewInDetails(file);
+        } catch (error) {
+          console.error('Error playing audio file:', error);
         }
       }
 
